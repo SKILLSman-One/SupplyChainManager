@@ -1888,24 +1888,61 @@ class MainFrame extends JFrame {
      * @return A JPanel with gradient background and centered title
      */
     private JPanel createGradientPanel(String title) {
+        // Choose gradient colors based on panel type
+        final Color startColor;
+        final Color endColor;
+        
+        if (title.equals("Raw Material Producers")) {
+            // Light green to darker green
+            startColor = new Color(144, 238, 144);
+            endColor = new Color(46, 139, 87);
+        } else if (title.equals("Factories")) {
+            // Light blue to darker blue
+            startColor = new Color(173, 216, 230);
+            endColor = new Color(70, 130, 180);
+        } else if (title.equals("Markets")) {
+            // Light orange to darker orange
+            startColor = new Color(255, 222, 173);
+            endColor = new Color(255, 140, 0);
+        } else if (title.equals("Customers")) {
+            // Light purple to darker purple
+            startColor = new Color(216, 191, 216);
+            endColor = new Color(148, 0, 211);
+        } else {
+            // Default gradient
+            startColor = new Color(220, 230, 255);
+            endColor = new Color(200, 215, 240);
+        }
+        
         JPanel panel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-                int w = getWidth();
-                int h = getHeight();
-                Color color1 = new Color(220, 230, 255);
-                Color color2 = new Color(200, 215, 240);
-                GradientPaint gp = new GradientPaint(0, 0, color1, 0, h, color2);
+                
+                int width = getWidth();
+                int height = getHeight();
+                
+                // Create rounded rectangle shape
+                RoundRectangle2D roundedRect = new RoundRectangle2D.Float(0, 0, width - 1, height - 1, 20, 20);
+                
+                // Draw rounded rectangle with gradient
+                GradientPaint gp = new GradientPaint(0, 0, startColor, 0, height, endColor);
                 g2d.setPaint(gp);
-                g2d.fillRect(0, 0, w, h);
+                g2d.fill(roundedRect);
+                
+                // Add a subtle border
+                g2d.setColor(endColor.darker());
+                g2d.draw(roundedRect);
             }
         };
+        
         panel.setLayout(new BorderLayout());
         JLabel label = new JLabel(title, JLabel.CENTER);
         label.setFont(new Font("Sans-Serif", Font.BOLD, 16));
+        label.setForeground(Color.WHITE);
         panel.add(label, BorderLayout.CENTER);
         panel.setCursor(new Cursor(Cursor.HAND_CURSOR));
         return panel;
@@ -3090,7 +3127,592 @@ class MainFrame extends JFrame {
      */
     private void showCustomersPanel() {
         getContentPane().removeAll();
-        getContentPane().add(createCustomerPanel(), BorderLayout.CENTER);
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        
+        // Create title panel with back button
+        JPanel titlePanel = new JPanel(new BorderLayout());
+        JLabel titleLabel = new JLabel("Customers", JLabel.CENTER);
+        titleLabel.setFont(new Font("Sans-Serif", Font.BOLD, 18));
+        JButton backButton = new JButton("Back");
+        backButton.addActionListener(e -> {
+            // Return to main menu
+            getContentPane().removeAll();
+            setTitle("Supply Chain System");
+            // Create the main UI with a vertical button layout
+            setLayout(new BorderLayout());
+            
+            // Main title at the top
+            JLabel mainTitleLabel = new JLabel("Supply Chain System", JLabel.CENTER);
+            mainTitleLabel.setFont(new Font("Sans-Serif", Font.BOLD, 24));
+            add(mainTitleLabel, BorderLayout.NORTH);
+            
+            // Create a panel for the main menu buttons with spacing between them
+            JPanel menuPanel = new JPanel(new GridLayout(4, 1, 10, 30));
+            menuPanel.setBorder(BorderFactory.createEmptyBorder(30, 100, 30, 100));
+            
+            // Re-create all four panels
+            JPanel producersPanel = createGradientPanel("Raw Material Producers");
+            producersPanel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    showProducersPanel();
+                }
+            });
+            
+            JPanel factoriesPanel = createGradientPanel("Factories");
+            factoriesPanel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    showFactoriesPanel();
+                }
+            });
+            
+            JPanel marketsPanel = createGradientPanel("Markets");
+            marketsPanel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    showMarketsPanel();
+                }
+            });
+            
+            JPanel customersPanel = createGradientPanel("Customers");
+            customersPanel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    showCustomersPanel();
+                }
+            });
+            
+            // Add the panels to the main panel
+            menuPanel.add(producersPanel);
+            menuPanel.add(factoriesPanel);
+            menuPanel.add(marketsPanel);
+            menuPanel.add(customersPanel);
+            
+            // Add the main panel to the center of the frame
+            add(menuPanel, BorderLayout.CENTER);
+            revalidate();
+            repaint();
+        });
+        
+        titlePanel.add(titleLabel, BorderLayout.CENTER);
+        titlePanel.add(backButton, BorderLayout.EAST);
+        
+        // Add the title panel to the main panel
+        mainPanel.add(titlePanel, BorderLayout.NORTH);
+        
+        // Create and add the customers panel content
+        JPanel customersListPanel = new JPanel(new BorderLayout());
+        
+        // If customers list is empty, show a message
+        if (customers.isEmpty()) {
+            JLabel emptyLabel = new JLabel("No customers. Add one!");
+            emptyLabel.setFont(new Font("Sans-Serif", Font.ITALIC, 14));
+            customersListPanel.add(emptyLabel, BorderLayout.CENTER);
+        } else {
+            // Create a panel for the customer list
+            JPanel customerButtonsPanel = new JPanel(new GridLayout(customers.size(), 1));
+            
+            // Create a button for each customer
+            for (Customer customer : customers) {
+                JButton customerButton = new JButton(customer.name);
+                customerButton.addActionListener(actionEvent -> {
+                    try {
+                        // Show dialog to edit customer
+                        JDialog editCustomerDialog = new JDialog(this, "Edit Customer: " + customer.name, true);
+                        editCustomerDialog.setSize(400, 300);
+                        editCustomerDialog.setLocationRelativeTo(this);
+                        editCustomerDialog.setLayout(new BorderLayout());
+                        
+                        // Create a panel with customer information
+                        JPanel infoPanel = new JPanel(new GridLayout(3, 2, 5, 5));
+                        infoPanel.add(new JLabel("Name:"));
+                        infoPanel.add(new JLabel(customer.name));
+                        infoPanel.add(new JLabel("Balance:"));
+                        infoPanel.add(new JLabel(String.format("%.2f", customer.balance)));
+                        
+                        // Create buttons for shopping and viewing inventory
+                        JButton shopBtn = new JButton("Shop");
+                        JButton inventoryBtn = new JButton("View Inventory");
+                        
+                        // Add action listeners to buttons
+                        shopBtn.addActionListener(shopEvent -> {
+                            try {
+                                // Create dialog for shopping
+                                JDialog shopDialog = new JDialog(editCustomerDialog, "Shop at Markets", true);
+                                shopDialog.setSize(450, 350);
+                                shopDialog.setLocationRelativeTo(editCustomerDialog);
+                                shopDialog.setLayout(new BorderLayout());
+                                
+                                // Create the shop content
+                                JPanel shopPanel = new JPanel(new BorderLayout());
+                                
+                                // Add customer balance at the top
+                                JPanel customerInfoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+                                JLabel balanceLabel = new JLabel("Balance: $" + String.format("%.2f", customer.balance));
+                                balanceLabel.setFont(new Font("Sans-Serif", Font.BOLD, 14));
+                                customerInfoPanel.add(balanceLabel);
+                                shopPanel.add(customerInfoPanel, BorderLayout.NORTH);
+                                
+                                // Create a panel for the product selection and buying
+                                JPanel selectionPanel = new JPanel(new GridLayout(5, 2, 5, 5));
+                                
+                                // Market selection
+                                selectionPanel.add(new JLabel("Select Market:"));
+                                JComboBox<Market> marketCombo = new JComboBox<>();
+                                if (markets.isEmpty()) {
+                                    marketCombo.addItem(null);
+                                    marketCombo.setEnabled(false);
+                                } else {
+                                    for (Market market : markets) {
+                                        marketCombo.addItem(market);
+                                    }
+                                }
+                                selectionPanel.add(marketCombo);
+                                
+                                // Product selection
+                                selectionPanel.add(new JLabel("Select Product:"));
+                                JComboBox<String> productCombo = new JComboBox<>();
+                                productCombo.setEnabled(!markets.isEmpty());
+                                selectionPanel.add(productCombo);
+                                
+                                // Product details
+                                selectionPanel.add(new JLabel("In Stock:"));
+                                JLabel stockLabel = new JLabel("-");
+                                selectionPanel.add(stockLabel);
+                                
+                                selectionPanel.add(new JLabel("Price per unit:"));
+                                JLabel priceLabel = new JLabel("-");
+                                selectionPanel.add(priceLabel);
+                                
+                                selectionPanel.add(new JLabel("Purchase Quantity:"));
+                                JTextField quantityField = new JTextField();
+                                selectionPanel.add(quantityField);
+                                
+                                // Update product combo when market is selected
+                                marketCombo.addActionListener(marketEvent -> {
+                                    Market selectedMarket = (Market) marketCombo.getSelectedItem();
+                                    productCombo.removeAllItems();
+                                    
+                                    if (selectedMarket != null) {
+                                        // Add products that have stock
+                                        for (Map.Entry<String, Integer> entry : selectedMarket.stock.entrySet()) {
+                                            if (entry.getValue() > 0) {
+                                                productCombo.addItem(entry.getKey());
+                                            }
+                                        }
+                                        
+                                        // Enable/disable product selection
+                                        if (productCombo.getItemCount() > 0) {
+                                            productCombo.setEnabled(true);
+                                            productCombo.setSelectedIndex(0);
+                                        } else {
+                                            productCombo.setEnabled(false);
+                                            stockLabel.setText("-");
+                                            priceLabel.setText("-");
+                                        }
+                                    }
+                                });
+                                
+                                // Update stock and price when product is selected
+                                productCombo.addActionListener(productEvent -> {
+                                    Market selectedMarket = (Market) marketCombo.getSelectedItem();
+                                    String selectedProduct = (String) productCombo.getSelectedItem();
+                                    
+                                    if (selectedMarket != null && selectedProduct != null) {
+                                        int stock = selectedMarket.stock.getOrDefault(selectedProduct, 0);
+                                        double price = selectedMarket.getPrice(selectedProduct);
+                                        
+                                        stockLabel.setText(String.valueOf(stock));
+                                        priceLabel.setText("$" + String.format("%.2f", price));
+                                    } else {
+                                        stockLabel.setText("-");
+                                        priceLabel.setText("-");
+                                    }
+                                });
+                                
+                                shopPanel.add(selectionPanel, BorderLayout.CENTER);
+                                
+                                // Create buttons panel
+                                JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+                                JButton buyButton = new JButton("Buy");
+                                JButton closeButton = new JButton("Close");
+                                
+                                buttonsPanel.add(buyButton);
+                                buttonsPanel.add(closeButton);
+                                
+                                // Buy button action
+                                buyButton.addActionListener(buyEvent -> {
+                                    try {
+                                        Market selectedMarket = (Market) marketCombo.getSelectedItem();
+                                        String selectedProduct = (String) productCombo.getSelectedItem();
+                                        
+                                        if (selectedMarket == null || selectedProduct == null) {
+                                            JOptionPane.showMessageDialog(shopDialog,
+                                                "Please select a market and product first.",
+                                                "Selection Required",
+                                                JOptionPane.WARNING_MESSAGE);
+                                            return;
+                                        }
+                                        
+                                        // Parse quantity
+                                        int quantity;
+                                        try {
+                                            quantity = Integer.parseInt(quantityField.getText());
+                                            if (quantity <= 0) {
+                                                throw new NumberFormatException();
+                                            }
+                                        } catch (NumberFormatException ex) {
+                                            JOptionPane.showMessageDialog(shopDialog,
+                                                "Please enter a valid positive number for quantity.",
+                                                "Invalid Quantity",
+                                                JOptionPane.WARNING_MESSAGE);
+                                            quantityField.requestFocus();
+                                            return;
+                                        }
+                                        
+                                        // Check stock
+                                        int availableStock = selectedMarket.stock.getOrDefault(selectedProduct, 0);
+                                        if (quantity > availableStock) {
+                                            JOptionPane.showMessageDialog(shopDialog,
+                                                "Not enough stock. Only " + availableStock + " available.",
+                                                "Insufficient Stock",
+                                                JOptionPane.WARNING_MESSAGE);
+                                            return;
+                                        }
+                                        
+                                        // Calculate total cost
+                                        double pricePerUnit = selectedMarket.getPrice(selectedProduct);
+                                        double totalCost = pricePerUnit * quantity;
+                                        
+                                        // Check customer balance
+                                        if (totalCost > customer.balance) {
+                                            JOptionPane.showMessageDialog(shopDialog,
+                                                "Insufficient funds. Required: $" + String.format("%.2f", totalCost) +
+                                                ", Available: $" + String.format("%.2f", customer.balance),
+                                                "Insufficient Funds",
+                                                JOptionPane.WARNING_MESSAGE);
+                                            return;
+                                        }
+                                        
+                                        // Execute purchase
+                                        customer.balance -= totalCost;
+                                        customer.addProduct(selectedProduct, quantity);
+                                        selectedMarket.stock.put(selectedProduct, availableStock - quantity);
+                                        selectedMarket.balance += totalCost;
+                                        
+                                        // Update displayed information
+                                        balanceLabel.setText("Balance: $" + String.format("%.2f", customer.balance));
+                                        stockLabel.setText(String.valueOf(availableStock - quantity));
+                                        
+                                        // Update the balance display in the parent dialog
+                                        for (Component comp : infoPanel.getComponents()) {
+                                            if (comp instanceof JLabel && ((JLabel)comp).getText().startsWith("Balance:")) {
+                                                ((JLabel)comp).setText("Balance: " + String.format("%.2f", customer.balance));
+                                                break;
+                                            }
+                                        }
+                                        
+                                        // Show success message
+                                        JOptionPane.showMessageDialog(shopDialog,
+                                            "Successfully purchased " + quantity + " " + selectedProduct +
+                                            " for $" + String.format("%.2f", totalCost),
+                                            "Purchase Successful",
+                                            JOptionPane.INFORMATION_MESSAGE);
+                                        
+                                        // Refresh market/product selection if stock is depleted
+                                        if (availableStock - quantity == 0) {
+                                            // Trigger market selection to refresh product list
+                                            marketCombo.setSelectedIndex(marketCombo.getSelectedIndex());
+                                        }
+                                        
+                                    } catch (Exception ex) {
+                                        JOptionPane.showMessageDialog(shopDialog,
+                                            "Error during purchase: " + ex.getMessage(),
+                                            "Purchase Error",
+                                            JOptionPane.ERROR_MESSAGE);
+                                    }
+                                });
+                                
+                                // Close button action
+                                closeButton.addActionListener(closeEvent -> shopDialog.dispose());
+                                
+                                shopPanel.add(buttonsPanel, BorderLayout.SOUTH);
+                                shopDialog.add(shopPanel);
+                                
+                                // Show the shop dialog
+                                shopDialog.setVisible(true);
+                                
+                            } catch (Exception ex) {
+                                JOptionPane.showMessageDialog(editCustomerDialog,
+                                    "Error opening shop: " + ex.getMessage(),
+                                    "Error",
+                                    JOptionPane.ERROR_MESSAGE);
+                            }
+                        });
+                        
+                        inventoryBtn.addActionListener(inventoryEvent -> {
+                            try {
+                                // Create dialog for viewing inventory
+                                JDialog inventoryDialog = new JDialog(editCustomerDialog, "Customer Inventory", true);
+                                inventoryDialog.setSize(350, 300);
+                                inventoryDialog.setLocationRelativeTo(editCustomerDialog);
+                                inventoryDialog.setLayout(new BorderLayout());
+                                
+                                // Create a panel for the inventory title
+                                JPanel inventoryTitlePanel = new JPanel(new BorderLayout());
+                                JLabel inventoryTitleLabel = new JLabel("Inventory for " + customer.name, JLabel.CENTER);
+                                inventoryTitleLabel.setFont(new Font("Sans-Serif", Font.BOLD, 16));
+                                inventoryTitlePanel.add(inventoryTitleLabel, BorderLayout.CENTER);
+                                
+                                // Add customer balance
+                                JPanel balancePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+                                JLabel balanceLabel = new JLabel("Balance: $" + String.format("%.2f", customer.balance));
+                                balanceLabel.setFont(new Font("Sans-Serif", Font.BOLD, 14));
+                                balancePanel.add(balanceLabel);
+                                
+                                // Create a panel for the inventory content
+                                JPanel contentPanel = new JPanel(new BorderLayout());
+                                contentPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+                                
+                                // Create a header for the inventory table
+                                JPanel headerPanel = new JPanel(new GridLayout(1, 2));
+                                headerPanel.add(new JLabel("Product", JLabel.LEFT));
+                                headerPanel.add(new JLabel("Quantity", JLabel.RIGHT));
+                                
+                                // Create the inventory list
+                                JPanel inventoryPanel = new JPanel();
+                                
+                                if (customer.inventory.isEmpty()) {
+                                    // Show empty inventory message
+                                    inventoryPanel.setLayout(new BorderLayout());
+                                    JLabel emptyLabel = new JLabel("No items in inventory", JLabel.CENTER);
+                                    emptyLabel.setFont(new Font("Sans-Serif", Font.ITALIC, 14));
+                                    inventoryPanel.add(emptyLabel, BorderLayout.CENTER);
+                                } else {
+                                    // Show inventory items in a grid
+                                    inventoryPanel.setLayout(new GridLayout(customer.inventory.size(), 2, 5, 5));
+                                    for (Map.Entry<String, Integer> entry : customer.inventory.entrySet()) {
+                                        JLabel productLabel = new JLabel(entry.getKey(), JLabel.LEFT);
+                                        JLabel quantityLabel = new JLabel(entry.getValue().toString(), JLabel.RIGHT);
+                                        
+                                        inventoryPanel.add(productLabel);
+                                        inventoryPanel.add(quantityLabel);
+                                    }
+                                }
+                                
+                                // Add components to the content panel
+                                contentPanel.add(balancePanel, BorderLayout.NORTH);
+                                contentPanel.add(headerPanel, BorderLayout.CENTER);
+                                contentPanel.add(inventoryPanel, BorderLayout.SOUTH);
+                                
+                                // Add a scrollable view for the inventory
+                                JScrollPane scrollPane = new JScrollPane(contentPanel);
+                                scrollPane.setBorder(BorderFactory.createEmptyBorder());
+                                
+                                // Add components to the dialog
+                                inventoryDialog.add(inventoryTitlePanel, BorderLayout.NORTH);
+                                inventoryDialog.add(scrollPane, BorderLayout.CENTER);
+                                
+                                // Add a close button
+                                JButton closeInventoryBtn = new JButton("Close");
+                                closeInventoryBtn.addActionListener(closeEvent -> inventoryDialog.dispose());
+                                
+                                JPanel closePanel = new JPanel();
+                                closePanel.add(closeInventoryBtn);
+                                inventoryDialog.add(closePanel, BorderLayout.SOUTH);
+                                
+                                // Show the inventory dialog
+                                inventoryDialog.setVisible(true);
+                                
+                            } catch (Exception ex) {
+                                JOptionPane.showMessageDialog(editCustomerDialog,
+                                    "Error viewing inventory: " + ex.getMessage(),
+                                    "Error",
+                                    JOptionPane.ERROR_MESSAGE);
+                            }
+                        });
+                        
+                        // Create a panel for the buttons
+                        JPanel buttonPanel = new JPanel();
+                        buttonPanel.add(shopBtn);
+                        buttonPanel.add(inventoryBtn);
+                        
+                        // Add components to the dialog
+                        editCustomerDialog.add(infoPanel, BorderLayout.NORTH);
+                        editCustomerDialog.add(buttonPanel, BorderLayout.CENTER);
+                        
+                        // Add a close button at the bottom
+                        JButton closeBtn = new JButton("Close");
+                        closeBtn.addActionListener(closeEvent -> editCustomerDialog.dispose());
+                        
+                        JPanel closePanel = new JPanel();
+                        closePanel.add(closeBtn);
+                        editCustomerDialog.add(closePanel, BorderLayout.SOUTH);
+                        
+                        // Show the dialog
+                        editCustomerDialog.setVisible(true);
+                        
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(this,
+                            "Error editing customer: " + ex.getMessage(),
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
+                    }
+                });
+                
+                customerButtonsPanel.add(customerButton);
+            }
+            
+            customersListPanel.add(customerButtonsPanel, BorderLayout.CENTER);
+        }
+        
+        // Add the customers list panel to the main panel
+        mainPanel.add(customersListPanel, BorderLayout.CENTER);
+        
+        // Create buttons for adding customers
+        JButton addBtn = new JButton("Add Customer");
+        JButton editBtn = new JButton("Edit Customer");
+        
+        // Create a panel for the buttons
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(addBtn);
+        buttonPanel.add(editBtn);
+        
+        // Add action listener for add button
+        addBtn.addActionListener(e -> {
+            try {
+                // Create a dialog for adding a new customer
+                JDialog addCustomerDialog = new JDialog(this, "Add New Customer", true);
+                addCustomerDialog.setSize(300, 150);
+                addCustomerDialog.setLocationRelativeTo(this);
+                addCustomerDialog.setLayout(new GridLayout(3, 2, 5, 5));
+                
+                // Add components to the dialog
+                JLabel nameLabel = new JLabel("Customer Name:");
+                JTextField nameField = new JTextField();
+                JLabel balanceLabel = new JLabel("Initial Balance:");
+                JTextField balanceField = new JTextField();
+                JButton dialogAddBtn = new JButton("Add");
+                
+                addCustomerDialog.add(nameLabel);
+                addCustomerDialog.add(nameField);
+                addCustomerDialog.add(balanceLabel);
+                addCustomerDialog.add(balanceField);
+                addCustomerDialog.add(new JLabel()); // Empty cell
+                addCustomerDialog.add(dialogAddBtn);
+                
+                // Add action listener for add button
+                dialogAddBtn.addActionListener(dialogEvent -> {
+                    try {
+                        // Validate inputs
+                        String name = nameField.getText().trim();
+                        if (name.isEmpty()) {
+                            throw new IllegalArgumentException("Customer name cannot be empty");
+                        }
+                        
+                        // Check for duplicate customer names
+                        for (Customer existingCustomer : customers) {
+                            if (existingCustomer.name.equals(name)) {
+                                throw new IllegalArgumentException("A customer with this name already exists");
+                            }
+                        }
+                        
+                        double balance;
+                        try {
+                            balance = Double.parseDouble(balanceField.getText());
+                            if (balance < 0) {
+                                throw new NumberFormatException();
+                            }
+                        } catch (NumberFormatException ex) {
+                            throw new IllegalArgumentException("Balance must be a positive number");
+                        }
+                        
+                        // Create and add the new customer
+                        Customer newCustomer = new Customer(name, balance);
+                        customers.add(newCustomer);
+                        
+                        // Close the dialog and refresh the customers panel
+                        addCustomerDialog.dispose();
+                        showCustomersPanel(); // Refresh the panel
+                        
+                    } catch (IllegalArgumentException ex) {
+                        JOptionPane.showMessageDialog(addCustomerDialog,
+                            ex.getMessage(),
+                            "Invalid Input",
+                            JOptionPane.WARNING_MESSAGE);
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(addCustomerDialog,
+                            "Error adding customer: " + ex.getMessage(),
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
+                    }
+                });
+                
+                // Show the dialog
+                addCustomerDialog.setVisible(true);
+                
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this,
+                    "Error creating dialog: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        });
+        
+        // Add action listener for edit button (similar to clicking a customer button)
+        editBtn.addActionListener(e -> {
+            if (customers.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                    "No customers available to edit. Please add a customer first.",
+                    "No Customers",
+                    JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            
+            // For simplicity, just edit the first customer
+            Customer customer = customers.get(0);
+            
+            try {
+                // Show dialog to edit customer (simplified version)
+                JDialog editCustomerDialog = new JDialog(this, "Edit Customer: " + customer.name, true);
+                editCustomerDialog.setSize(400, 300);
+                editCustomerDialog.setLocationRelativeTo(this);
+                editCustomerDialog.setLayout(new BorderLayout());
+                
+                // Create a panel with customer information
+                JPanel infoPanel = new JPanel(new GridLayout(2, 2, 5, 5));
+                infoPanel.add(new JLabel("Name:"));
+                infoPanel.add(new JLabel(customer.name));
+                infoPanel.add(new JLabel("Balance:"));
+                infoPanel.add(new JLabel(String.format("%.2f", customer.balance)));
+                
+                editCustomerDialog.add(infoPanel, BorderLayout.NORTH);
+                
+                // Add a close button at the bottom
+                JButton closeBtn = new JButton("Close");
+                closeBtn.addActionListener(closeEvent -> editCustomerDialog.dispose());
+                
+                JPanel closePanel = new JPanel();
+                closePanel.add(closeBtn);
+                editCustomerDialog.add(closePanel, BorderLayout.SOUTH);
+                
+                // Show the dialog
+                editCustomerDialog.setVisible(true);
+                
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this,
+                    "Error editing customer: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        });
+        
+        // Add the button panel to the main panel
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+        
+        // Add the main panel to the content pane
+        add(mainPanel);
         revalidate();
         repaint();
     }
