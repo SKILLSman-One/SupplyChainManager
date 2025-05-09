@@ -1321,10 +1321,7 @@ class MainFrame extends JFrame {
         for (Customer c : customers) {
             JRadioButton btn = new JRadioButton(c.toString());
             if (c == selectedCustomer) btn.setSelected(true);
-            btn.addActionListener(e -> {
-                selectedCustomer = c;
-                // No longer open edit dialog when selected, just set selection
-            });
+            btn.addActionListener(e -> selectedCustomer = c);
             group.add(btn);
             center.add(btn);
         }
@@ -1415,10 +1412,7 @@ class MainFrame extends JFrame {
         for (Market m : markets) {
             JRadioButton btn = new JRadioButton(m.name);
             if (m == selectedMarket) btn.setSelected(true);
-            btn.addActionListener(e -> {
-                selectedMarket = m;
-                // No longer auto-open market dialog when clicked, just set selection
-            });
+            btn.addActionListener(e -> selectedMarket = m);
             group.add(btn);
             center.add(btn);
         }
@@ -1596,7 +1590,6 @@ class MainFrame extends JFrame {
                 button.addActionListener(new ActionListener() {
                     public void actionPerformed(ActionEvent e) {
                         selectedProducer = p;
-                        // No longer auto open edit panel when clicked, just track selection
                     }
                 });
 
