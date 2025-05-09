@@ -1,0 +1,800 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+// Main class to run the program
+public class SupplyChainSystemGUI {
+    public static void main(String[] args) {
+        MainFrame frame = new MainFrame();
+        frame.setVisible(true);
+    }
+}
+class InputMaterial {
+    Producer producer;
+    int amount;
+
+    public InputMaterial(Producer producer, int amount) {
+        this.producer = producer;
+        this.amount = amount;
+    }
+
+    public String toString() {
+        return producer.name + " x" + amount;
+    }
+}
+
+class Customer {
+    String name;
+    double balance;
+    Map<String, Integer> inventory = new HashMap<>();
+
+    public Customer(String name, double balance) {
+        this.name = name;
+        this.balance = balance;
+    }
+
+    public void addProduct(String product, int amount) {
+        inventory.put(product, inventory.getOrDefault(product, 0) + amount);
+    }
+
+    public String toString() {
+        return name + " (Balance: " + String.format("%.2f", balance) + ")";
+    }
+}
+
+
+class Market {
+    String name;
+    double balance;
+    Map<String, Integer> stock = new HashMap<>();
+    Map<String, Double> prices = new HashMap<>();
+
+    public Market(String name, double balance) {
+        this.name = name;
+        this.balance = balance;
+    }
+
+    public void buyProduct(String product, int amount, double pricePerUnit, FactoryExtended factory) {
+        if (!factory.products.containsKey(product)) return;
+
+        InventoryItem item = factory.products.get(product);
+        if (item.quantity < amount) return;
+
+        double totalCost = amount * pricePerUnit;
+        if (balance < totalCost) return;
+
+        item.quantity -= amount;
+        balance -= totalCost;
+
+        stock.put(product, stock.getOrDefault(product, 0) + amount);
+    }
+
+    public void setPrice(String product, double price) {
+        prices.put(product, price);
+    }
+
+    public double getPrice(String product) {
+        return prices.getOrDefault(product, 0.0);
+    }
+
+    public String toString() {
+        return name;
+    }
+}
+
+class EditCustomerDialog extends JDialog {
+    public EditCustomerDialog(JFrame parent, Customer customer, java.util.List<Market> markets) {
+        super(parent, "Edit Customer", true);
+        setSize(300, 150);
+        setLocationRelativeTo(parent);
+        setLayout(new BorderLayout());
+
+        JLabel nameLabel = new JLabel("Name: " + customer.name);
+        JLabel balanceLabel = new JLabel("Balance: " + String.format("%.2f", customer.balance));
+        JButton shopBtn = new JButton("Shop");
+        JButton inventoryBtn = new JButton("View Inventory");
+
+        JPanel top = new JPanel(new GridLayout(2, 1));
+        top.add(nameLabel);
+        top.add(balanceLabel);
+
+        JPanel bottom = new JPanel();
+        bottom.add(shopBtn);
+        bottom.add(inventoryBtn);
+
+        shopBtn.addActionListener(e -> new ShopDialog(parent, customer, markets).setVisible(true));
+        inventoryBtn.addActionListener(e -> new CustomerInventoryDialog(parent, customer).setVisible(true));
+
+        add(top, BorderLayout.CENTER);
+        add(bottom, BorderLayout.SOUTH);
+    }
+}
+
+class ShopDialog extends JDialog {
+    public ShopDialog(JFrame parent, Customer customer, java.util.List<Market> markets) {
+        super(parent, "Shop", true);
+        setSize(400, 250);
+        setLocationRelativeTo(parent);
+        setLayout(new BorderLayout());
+
+        JLabel balanceLabel = new JLabel("Balance: " + String.format("%.2f", customer.balance));
+        JComboBox<String> productSelector = new JComboBox<>();
+        Map<String, Market> productMarketMap = new HashMap<>();
+
+        for (Market m : markets) {
+            for (Map.Entry<String, Integer> entry : m.stock.entrySet()) {
+                String label = entry.getKey() + " (" + m.name + ")";
+                productSelector.addItem(label);
+                productMarketMap.put(label, m);
+            }
+        }
+
+        JLabel stockLabel = new JLabel("Stock: -");
+        JTextField amountField = new JTextField(5);
+        JButton buyBtn = new JButton("Buy");
+
+        productSelector.addActionListener(e -> {
+            String selected = (String) productSelector.getSelectedItem();
+            if (selected == null) return;
+            Market m = productMarketMap.get(selected);
+            String product = selected.split(" \\(")[0];
+            int stock = m.stock.getOrDefault(product, 0);
+            stockLabel.setText("Stock: " + stock);
+        });
+
+        buyBtn.addActionListener(e -> {
+            String selected = (String) productSelector.getSelectedItem();
+            if (selected == null) return;
+            Market m = productMarketMap.get(selected);
+            String product = selected.split(" \\(")[0];
+
+            try {
+                int amount = Integer.parseInt(amountField.getText());
+                int available = m.stock.getOrDefault(product, 0);
+                double price = m.getPrice(product);
+                double total = price * amount;
+
+                if (amount <= 0 || amount > available) {
+                    JOptionPane.showMessageDialog(this, "Invalid amount.");
+                    return;
+                }
+                if (customer.balance < total) {
+                    JOptionPane.showMessageDialog(this, "Not enough balance.");
+                    return;
+                }
+
+                customer.balance -= total;
+                m.stock.put(product, available - amount);
+                customer.addProduct(product, amount);
+
+                balanceLabel.setText("Balance: " + String.format("%.2f", customer.balance));
+                stockLabel.setText("Stock: " + (available - amount));
+                JOptionPane.showMessageDialog(this, "Purchase successful.");
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Invalid input.");
+            }
+        });
+
+        JPanel center = new JPanel(new GridLayout(3, 2, 5, 5));
+        center.add(new JLabel("Select Product:"));
+        center.add(productSelector);
+        center.add(stockLabel);
+        center.add(new JLabel("Buy Amount:"));
+        center.add(amountField);
+        center.add(buyBtn);
+
+        add(balanceLabel, BorderLayout.NORTH);
+        add(center, BorderLayout.CENTER);
+    }
+}
+
+
+class CustomerInventoryDialog extends JDialog {
+    public CustomerInventoryDialog(JFrame parent, Customer customer) {
+        super(parent, "Inventory of " + customer.name, true);
+        setSize(400, 300);
+        setLocationRelativeTo(parent);
+        setLayout(new BorderLayout());
+
+        JTextArea area = new JTextArea();
+        area.setEditable(false);
+        StringBuilder sb = new StringBuilder();
+        sb.append("Balance: ").append(String.format("%.2f", customer.balance)).append("\n\n");
+        sb.append("Inventory:\n");
+        for (Map.Entry<String, Integer> entry : customer.inventory.entrySet()) {
+            sb.append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
+        }
+
+        area.setText(sb.toString());
+        add(new JScrollPane(area), BorderLayout.CENTER);
+    }
+}
+
+class AddMarketDialog extends JDialog {
+    public AddMarketDialog(JFrame parent, java.util.List<Market> markets, Runnable updateCallback) {
+        super(parent, "Add New Market", true);
+        setSize(300, 200);
+        setLocationRelativeTo(parent);
+        setLayout(new GridLayout(3, 2, 5, 5));
+
+        JTextField nameField = new JTextField();
+        JTextField balanceField = new JTextField();
+
+        add(new JLabel("Market Name:"));
+        add(nameField);
+        add(new JLabel("Initial Balance:"));
+        add(balanceField);
+
+        JButton addBtn = new JButton("Add");
+        add(new JLabel()); // spacer
+        add(addBtn);
+
+        addBtn.addActionListener(e -> {
+            try {
+                String name = nameField.getText();
+                double balance = Double.parseDouble(balanceField.getText());
+                if (name.isEmpty() || balance < 0) throw new Exception();
+                markets.add(new Market(name, balance));
+                updateCallback.run();
+                dispose();
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Invalid input.");
+            }
+        });
+    }
+}
+class EditMarketPanel extends JPanel {
+    public EditMarketPanel(JFrame parent, Market market, java.util.List<FactoryExtended> factories) {
+        setLayout(new BorderLayout());
+
+        JLabel balanceLabel = new JLabel("Balance: " + market.balance);
+        JComboBox<String> productSelector = new JComboBox<>();
+        JLabel stockLabel = new JLabel("Stock Quantity: -");
+
+        // Populate productSelector from factory products
+        Set<String> factoryProducts = new HashSet<>();
+        for (FactoryExtended f : factories) {
+            factoryProducts.addAll(f.products.keySet());
+        }
+        for (String product : factoryProducts) {
+            productSelector.addItem(product);
+        }
+
+        JTextField amountField = new JTextField(5);
+        JButton buyButton = new JButton("Buy");
+
+        JTextField priceField = new JTextField(5);
+        JButton updatePriceButton = new JButton("Update Price");
+
+        productSelector.addActionListener(e -> {
+            String selected = (String) productSelector.getSelectedItem();
+            int total = 0;
+            for (FactoryExtended f : factories) {
+                InventoryItem item = f.products.get(selected);
+                if (item != null) total += item.quantity;
+            }
+            stockLabel.setText("Stock Quantity: " + total);
+        });
+
+        buyButton.addActionListener(e -> {
+            String selected = (String) productSelector.getSelectedItem();
+            int amount;
+            try {
+                amount = Integer.parseInt(amountField.getText());
+                if (amount <= 0) throw new NumberFormatException();
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(parent, "Invalid amount.");
+                return;
+            }
+
+            // Try to find factory that can sell
+            for (FactoryExtended f : factories) {
+                InventoryItem item = f.products.get(selected);
+                if (item != null && item.quantity >= amount) {
+                    double costPerUnit = 0;
+                    for (ProductDesign d : f.designs) {
+                        if (d.name.equals(selected)) {
+                            costPerUnit = d.cost;
+                            break;
+                        }
+                    }
+                    double totalCost = costPerUnit * amount;
+                    if (market.balance < totalCost) {
+                        JOptionPane.showMessageDialog(parent, "Market does not have enough balance.");
+                        return;
+                    }
+                    market.buyProduct(selected, amount, costPerUnit, f);
+                    balanceLabel.setText("Balance: " + market.balance);
+                    productSelector.setSelectedItem(selected);
+                    return;
+                }
+            }
+            JOptionPane.showMessageDialog(parent, "Not enough stock in factories.");
+        });
+
+        updatePriceButton.addActionListener(e -> {
+            String selected = (String) productSelector.getSelectedItem();
+            try {
+                double price = Double.parseDouble(priceField.getText());
+                market.setPrice(selected, price);
+                JOptionPane.showMessageDialog(parent, "Price updated for " + selected);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(parent, "Invalid price.");
+            }
+        });
+
+        JPanel top = new JPanel(new GridLayout(3, 2, 5, 5));
+        top.add(new JLabel("Select Product:"));
+        top.add(productSelector);
+        top.add(stockLabel);
+        top.add(new JLabel("Amount:"));
+        top.add(amountField);
+        top.add(buyButton);
+
+        JPanel bottom = new JPanel(new FlowLayout());
+        bottom.add(new JLabel("Price (for stock):"));
+        bottom.add(priceField);
+        bottom.add(updatePriceButton);
+
+        add(balanceLabel, BorderLayout.NORTH);
+        add(top, BorderLayout.CENTER);
+        add(bottom, BorderLayout.SOUTH);
+    }
+}
+
+class EditMarketDialog extends JDialog {
+    public EditMarketDialog(JFrame parent, Market market, java.util.List<Factory> factories) {
+        super(parent, "Edit Market: " + market.name, true);
+        setSize(400, 300);
+        setLocationRelativeTo(parent);
+        setLayout(new BorderLayout());
+
+        JLabel balanceLabel = new JLabel("Balance: " + market.balance);
+        JComboBox<String> productBox = new JComboBox<>();
+        JLabel stockLabel = new JLabel("Stock Quantity: -");
+
+        // Список только с фабричными товарами
+        Set<String> factoryProducts = new HashSet<>();
+        for (Factory f : factories) {
+            if (f instanceof FactoryExtended) {
+                factoryProducts.addAll(((FactoryExtended) f).products.keySet());
+            }
+        }
+        for (String p : factoryProducts) productBox.addItem(p);
+
+        JTextField amountField = new JTextField(5);
+        JButton buyBtn = new JButton("Buy");
+
+        JTextField priceField = new JTextField(5);
+        JButton updatePriceBtn = new JButton("Update Price");
+
+        productBox.addActionListener(e -> {
+            String prod = (String) productBox.getSelectedItem();
+            int total = 0;
+            for (Factory f : factories) {
+                if (f instanceof FactoryExtended) {
+                    InventoryItem item = ((FactoryExtended) f).products.get(prod);
+                    if (item != null) total += item.quantity;
+                }
+            }
+            stockLabel.setText("Stock Quantity: " + total);
+        });
+
+        buyBtn.addActionListener(e -> {
+            try {
+                String prod = (String) productBox.getSelectedItem();
+                int amount = Integer.parseInt(amountField.getText());
+                if (amount <= 0) throw new NumberFormatException();
+
+                for (Factory f : factories) {
+                    if (f instanceof FactoryExtended) {
+                        FactoryExtended fe = (FactoryExtended) f;
+                        InventoryItem item = fe.products.get(prod);
+                        if (item != null && item.quantity >= amount) {
+                            double unitCost = 0;
+                            for (ProductDesign d : fe.designs) {
+                                if (d.name.equals(prod)) {
+                                    unitCost = d.cost;
+                                    break;
+                                }
+                            }
+
+                            double total = amount * unitCost;
+                            if (market.balance >= total) {
+                                market.buyProduct(prod, amount, unitCost, fe);
+                                balanceLabel.setText("Balance: " + market.balance);
+                                productBox.setSelectedItem(prod);
+                                return;
+                            } else {
+                                JOptionPane.showMessageDialog(this, "Not enough balance.");
+                                return;
+                            }
+                        }
+                    }
+                }
+
+                JOptionPane.showMessageDialog(this, "Not enough stock.");
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Invalid amount.");
+            }
+        });
+
+        updatePriceBtn.addActionListener(e -> {
+            try {
+                String prod = (String) productBox.getSelectedItem();
+                double price = Double.parseDouble(priceField.getText());
+                market.setPrice(prod, price);
+                JOptionPane.showMessageDialog(this, "Price updated.");
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Invalid price.");
+            }
+        });
+
+        JPanel top = new JPanel();
+        top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
+
+        JPanel row1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        row1.add(new JLabel("Select Product:"));
+        row1.add(productBox);
+
+        JPanel row2 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        row2.add(stockLabel);
+
+        JPanel row3 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        row3.add(new JLabel("Amount:"));
+        row3.add(amountField);
+        row3.add(buyBtn);
+
+        top.add(row1);
+        top.add(row2);
+        top.add(row3);
+
+        JPanel bottom = new JPanel(new FlowLayout());
+        bottom.add(new JLabel("Price (for stock):"));
+        bottom.add(priceField);
+        bottom.add(updatePriceBtn);
+
+        add(balanceLabel, BorderLayout.NORTH);
+        add(top, BorderLayout.CENTER);
+        add(bottom, BorderLayout.SOUTH);
+    }
+}
+
+class ProductDesign {
+    String name;
+    double cost;
+    String ByProductName;
+    int ByProductAmount;
+    double ByProductCost;
+    ArrayList<InputMaterial> inputs = new ArrayList<>();
+
+    public ProductDesign(String name, double cost, String ByProductName, int ByProductAmount, double ByProductCost) {
+        this.name = name;
+        this.cost = cost;
+        this.ByProductName = ByProductName;
+        this.ByProductAmount = ByProductAmount;
+        this.ByProductCost = ByProductCost;
+    }
+
+    public void addInput(InputMaterial input) {
+        inputs.add(input);
+    }
+
+    public String toString() {
+        return name;
+    }
+}
+
+class InventoryItem {
+    String name;
+    int quantity;
+
+    public InventoryItem(String name, int quantity) {
+        this.name = name;
+        this.quantity = quantity;
+    }
+}
+
+class FactoryExtended extends Factory {
+    ArrayList<ProductDesign> designs = new ArrayList<>();
+    Map<String, InventoryItem> products = new HashMap<>();
+    Map<String, InventoryItem> ByProducts = new HashMap<>();
+
+    public FactoryExtended(String name, double balance, int capacity) {
+        super(name, balance, capacity);
+    }
+
+    public void addDesign(ProductDesign d) {
+        designs.add(d);
+    }
+
+    public void produce(ProductDesign d, int amount) {
+        // Обновление основной продукции
+        products.putIfAbsent(d.name, new InventoryItem(d.name, 0));
+        products.get(d.name).quantity += amount;
+
+        // Обновление побочной продукции
+        ByProducts.putIfAbsent(d.ByProductName, new InventoryItem(d.ByProductName, 0));
+        ByProducts.get(d.ByProductName).quantity += d.ByProductAmount * amount;
+    }
+
+    public void destroyByProduct(String name, int amount) {
+        InventoryItem item = ByProducts.get(name);
+        if (item != null && item.quantity >= amount) {
+            item.quantity -= amount;
+            balance -= amount * getByProductCost(name);
+        }
+    }
+
+    public double getByProductCost(String name) {
+        for (ProductDesign d : designs) {
+            if (d.ByProductName.equals(name)) return d.ByProductCost;
+        }
+        return 0;
+    }
+}
+
+// Диалоговое окно для создания дизайна
+class CreateDesignDialog extends JDialog {
+    private JTextField productNameField = new JTextField(10);
+    private JTextField productCostField = new JTextField(10);
+    private JTextField ByProductNameField = new JTextField(10);
+    private JTextField ByProductAmountField = new JTextField(10);
+    private JTextField ByProductCostField = new JTextField(10);
+    private JComboBox<Producer> materialSelector;
+    private JLabel stockLabel = new JLabel("Stock: -");
+    private JLabel selectedStockLabel = new JLabel("Selected Stock: -");  // New label for selected material stock
+    private JTextField inputAmountField = new JTextField(5);
+    private DefaultListModel<String> inputListModel = new DefaultListModel<>();
+    private ArrayList<InputMaterial> inputs = new ArrayList<>();
+
+    public CreateDesignDialog(JFrame parent, ArrayList<Producer> producers, FactoryExtended factory) {
+        super(parent, "Create Design", true);
+        setSize(500, 550);  // Increased height to accommodate new component
+        setLocationRelativeTo(parent);
+        setLayout(new BorderLayout());
+
+        JPanel fields = new JPanel(new GridLayout(6, 2, 5, 5));
+        fields.add(new JLabel("Product Name:"));
+        fields.add(productNameField);
+        fields.add(new JLabel("Product Cost:"));
+        fields.add(productCostField);
+        fields.add(new JLabel("Byproduct Name:"));
+        fields.add(ByProductNameField);
+        fields.add(new JLabel("Byproduct Amount:"));
+        fields.add(ByProductAmountField);
+        fields.add(new JLabel("Byproduct Cost:"));
+        fields.add(ByProductCostField);
+
+        JPanel inputPanel = new JPanel(new GridLayout(3, 1, 5, 5));  // Changed to GridLayout
+        JPanel materialSelectionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        materialSelector = new JComboBox<>(producers.toArray(new Producer[0]));
+        materialSelectionPanel.add(new JLabel("Material:"));
+        materialSelectionPanel.add(materialSelector);
+        materialSelectionPanel.add(stockLabel);
+
+        JPanel amountPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        amountPanel.add(new JLabel("Input Amount:"));
+        amountPanel.add(inputAmountField);
+        JButton addInputButton = new JButton("Add Input");
+        amountPanel.add(addInputButton);
+
+        JPanel selectedStockPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        selectedStockPanel.add(selectedStockLabel);
+
+        inputPanel.add(materialSelectionPanel);
+        inputPanel.add(amountPanel);
+        inputPanel.add(selectedStockPanel);
+
+        JList<String> inputList = new JList<>(inputListModel);
+        JScrollPane inputScroll = new JScrollPane(inputList);
+        inputScroll.setPreferredSize(new Dimension(100, 50)); // ← МЕНЬШИЙ размер
+
+// Обработка кнопки "Add Input"
+        addInputButton.addActionListener(e -> {
+            try {
+                Producer p = (Producer) materialSelector.getSelectedItem();
+                int amount = Integer.parseInt(inputAmountField.getText());
+                if (amount <= 0) throw new NumberFormatException();
+                inputs.add(new InputMaterial(p, amount));
+                inputListModel.addElement(p.name + " x" + amount);
+                updateSelectedStockDisplay();  // Обновляем отображение
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Invalid input amount.");
+            }
+        });
+
+        materialSelector.addActionListener(e -> {
+            Producer p = (Producer) materialSelector.getSelectedItem();
+            InventoryItem item = factory.products.get(p.name);
+            int stock = (item != null) ? item.quantity : 0;
+            stockLabel.setText("Stock: " + stock);
+            updateSelectedStockDisplay();
+        });
+
+        inputList.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                updateSelectedStockDisplay();
+            }
+        });
+
+        JPanel bottom = new JPanel();
+        JButton saveButton = new JButton("Save Design");
+        bottom.add(saveButton);
+
+
+        saveButton.addActionListener(e -> {
+            try {
+                String pname = productNameField.getText();
+                double pcost = Double.parseDouble(productCostField.getText());
+                String bname = ByProductNameField.getText();
+                int bamount = Integer.parseInt(ByProductAmountField.getText());
+                double bcost = Double.parseDouble(ByProductCostField.getText());
+                ProductDesign design = new ProductDesign(pname, pcost, bname, bamount, bcost);
+                for (InputMaterial im : inputs) design.addInput(im);
+                factory.addDesign(design);
+                JOptionPane.showMessageDialog(this, "Design saved successfully.");
+                dispose();
+                if (parent instanceof MainFrame) {
+                    ((MainFrame) parent).updateFactoryInfo();
+                }
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Error saving design. Check fields.");
+            }
+        });
+
+        JPanel centerPanel = new JPanel();
+        centerPanel.setLayout(new BorderLayout());
+        centerPanel.add(inputPanel, BorderLayout.NORTH);
+        centerPanel.add(inputScroll, BorderLayout.CENTER);
+
+        add(fields, BorderLayout.NORTH);
+        add(centerPanel, BorderLayout.CENTER);
+        add(bottom, BorderLayout.SOUTH);
+
+    }
+
+    // Helper method to update the selected stock display
+    private void updateSelectedStockDisplay() {
+        int selectedIndex = inputListModel.size() - 1; // Default to last added
+        if (selectedIndex >= 0) {
+            String selected = inputListModel.getElementAt(selectedIndex);
+            selectedStockLabel.setText("Selected Stock: " + selected);
+        } else {
+            selectedStockLabel.setText("Selected Stock: -");
+        }
+    }
+}
+
+// Диалоговое окно для производства продукта
+class ManufactureDialog extends JDialog {
+    public ManufactureDialog(JFrame parent, FactoryExtended factory) {
+        super(parent, "Manufacture Product", true);
+        setSize(400, 300);
+        setLocationRelativeTo(parent);
+        setLayout(new BorderLayout());
+
+        JComboBox<ProductDesign> designSelector = new JComboBox<>(factory.designs.toArray(new ProductDesign[0]));
+        JTextField amountField = new JTextField(10);
+
+        JPanel center = new JPanel(new GridLayout(2, 2, 5, 5));
+        center.add(new JLabel("Select Design:"));
+        center.add(designSelector);
+        center.add(new JLabel("Amount to Produce:"));
+        center.add(amountField);
+
+        JButton produceBtn = new JButton("Produce");
+
+        produceBtn.addActionListener(e -> {
+            ProductDesign d = (ProductDesign) designSelector.getSelectedItem();
+            try {
+                int amount = Integer.parseInt(amountField.getText());
+                if (amount <= 0) throw new NumberFormatException();
+
+                // Проверка входных материалов
+                for (InputMaterial input : d.inputs) {
+                    InventoryItem item = factory.products.get(input.producer.name);
+                    if (item == null || item.quantity < input.amount * amount) {
+                        JOptionPane.showMessageDialog(this, "Not enough stock in factory for: " + input.producer.name);
+                        return;
+                    }
+                }
+
+                // Проверка средств
+                double totalCost = d.cost * amount;
+                if (factory.balance < totalCost) {
+                    JOptionPane.showMessageDialog(this, "Not enough balance.");
+                    return;
+                }
+
+                // Списание ресурсов
+                for (InputMaterial input : d.inputs) {
+                    factory.products.get(input.producer.name).quantity -= input.amount * amount;
+                }
+                factory.balance -= totalCost;
+
+                // Производство продукта
+                factory.produce(d, amount);
+                if (parent instanceof MainFrame) {
+                    ((MainFrame) parent).updateFactoryInfo();
+                }
+                JOptionPane.showMessageDialog(this, "Production successful.");
+                dispose();
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Invalid amount.");
+            }
+        });
+
+        add(center, BorderLayout.CENTER);
+        add(produceBtn, BorderLayout.SOUTH);
+    }
+}
+
+// Диалог просмотра инвентаря
+class InventoryDialog extends JDialog {
+    public InventoryDialog(JFrame parent, FactoryExtended factory) {
+        super(parent, "Factory Inventory", true);
+        setSize(400, 400);
+        setLocationRelativeTo(parent);
+        setLayout(new BorderLayout());
+
+        JTextArea area = new JTextArea();
+        area.setEditable(false);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Products:\n");
+        for (InventoryItem item : factory.products.values()) {
+            sb.append(item.name).append(" - ").append(item.quantity).append("\n");
+        }
+        sb.append("\nByproducts:\n");
+        for (InventoryItem item : factory.ByProducts.values()) {
+            sb.append(item.name).append(" - ").append(item.quantity).append("\n");
+        }
+
+        area.setText(sb.toString());
+        add(new JScrollPane(area), BorderLayout.CENTER);
+    }
+}
+
+// Диалог удаления побочных продуктов
+class DestroyByProductDialog extends JDialog {
+    public DestroyByProductDialog(JFrame parent, FactoryExtended factory) {
+        super(parent, "Destroy Byproduct", true);
+        setSize(400, 250);
+        setLocationRelativeTo(parent);
+        setLayout(new BorderLayout());
+
+        JComboBox<String> ByProductSelector = new JComboBox<>(factory.ByProducts.keySet().toArray(new String[0]));
+        JTextField amountField = new JTextField(10);
+
+        JPanel center = new JPanel(new GridLayout(2, 2, 5, 5));
+        center.add(new JLabel("Select Byproduct:"));
+        center.add(ByProductSelector);
+        center.add(new JLabel("Amount:"));
+        center.add(amountField);
+
+        JButton destroyBtn = new JButton("Destroy");
+
+        destroyBtn.addActionListener(e -> {
+            String name = (String) ByProductSelector.getSelectedItem();
+            try {
+                int amount = Integer.parseInt(amountField.getText());
+                if (amount <= 0) throw new NumberFormatException();
+
+                InventoryItem item = factory.ByProducts.get(name);
+                if (item == null || item.quantity < amount) {
+                    JOptionPane.showMessageDialog(this, "Not enough to destroy.");
+                    return;
+                }
+
+                double cost = factory.getByProductCost(name) * amount;
+                if (factory.balance < cost) {
+                    JOptionPane.showMessageDialog(this, "Not enough balance to destroy.");
+                    return;
+                }
+
+                factory.destroyByProduct(name, amount);
+                JOptionPane.showMessageDialog(this, "Byproducts destroyed.");
+                dispose();
+            } catch (Exception ex) {
