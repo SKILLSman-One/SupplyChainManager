@@ -1,0 +1,197 @@
+Here are the key improvements to include in the Supply Chain System:
+
+1. Customer class enhancement:
+```java
+// Enhanced buyProduct method with proper exception handling
+public void buyProduct(String product, int amount, double price, Market market) throws Exception {
+    if (!market.stock.containsKey(product)) {
+        throw new Exception("Product not available in this market");
+    }
+    
+    int availableStock = market.stock.getOrDefault(product, 0);
+    if (availableStock < amount) {
+        throw new Exception("Not enough stock in market: requested " + amount + ", available " + availableStock);
+    }
+
+    double totalCost = amount * price;
+    if (balance < totalCost) {
+        throw new Exception("Not enough balance: cost " + String.format("%.2f", totalCost) + 
+                           ", available " + String.format("%.2f", balance));
+    }
+
+    // Complete successful purchase
+    balance -= totalCost;
+    market.balance += totalCost;  // Economic transfer - market receives payment
+    market.stock.put(product, availableStock - amount);
+    addProduct(product, amount);
+}
+```
+
+2. Market class enhancement:
+```java
+public void buyProduct(String product, int amount, double pricePerUnit, FactoryExtended factory) throws Exception {
+    if (!factory.products.containsKey(product)) {
+        throw new Exception("Product not available from this factory");
+    }
+
+    InventoryItem item = factory.products.get(product);
+    if (item.quantity < amount) {
+        throw new Exception("Not enough stock: requested " + amount + ", available " + item.quantity);
+    }
+
+    double totalCost = amount * pricePerUnit;
+    if (balance < totalCost) {
+        throw new Exception("Not enough balance: cost " + String.format("%.2f", totalCost) + 
+                           ", available " + String.format("%.2f", balance));
+    }
+
+    // Successful transaction logic
+    item.quantity -= amount;
+    balance -= totalCost;
+    factory.balance += totalCost; // Pay the factory (adding economic flow)
+    
+    // Update stock
+    stock.put(product, stock.getOrDefault(product, 0) + amount);
+}
+
+public void setPrice(String product, double price) throws Exception {
+    if (price <= 0) {
+        throw new Exception("Price must be greater than zero");
+    }
+    prices.put(product, price);
+}
+```
+
+3. ShopDialog enhancement:
+```java
+buyBtn.addActionListener(e -> {
+    String selected = (String) productSelector.getSelectedItem();
+    if (selected == null) return;
+    Market m = productMarketMap.get(selected);
+    String product = selected.split(" \\(")[0];
+
+    try {
+        int amount = Integer.parseInt(amountField.getText());
+        if (amount <= 0) {
+            JOptionPane.showMessageDialog(this, "Amount must be greater than zero.");
+            return;
+        }
+        
+        double price = m.getPrice(product);
+        if (price <= 0) {
+            JOptionPane.showMessageDialog(this, "Price not set for this product. Please contact the market manager.");
+            return;
+        }
+        
+        // Use the enhanced buyProduct method with proper exception handling
+        try {
+            // This will throw appropriate exceptions with detailed messages
+            customer.buyProduct(product, amount, price, m);
+            
+            // Update UI after successful purchase
+            balanceLabel.setText("Balance: " + String.format("%.2f", customer.balance));
+            int newStock = m.stock.getOrDefault(product, 0);
+            stockLabel.setText("Stock: " + newStock);
+            
+            // Show success message
+            JOptionPane.showMessageDialog(this, "Purchase successful!");
+        } catch (Exception ex) {
+            // Display the specific error from our economic logic
+            JOptionPane.showMessageDialog(this, "Purchase failed: " + ex.getMessage());
+        }
+    } catch (NumberFormatException ex) {
+        JOptionPane.showMessageDialog(this, "Please enter a valid number for the amount.");
+    } catch (Exception ex) {
+        JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+    }
+});
+```
+
+4. EditMarketPanel buyButton enhancement:
+```java
+buyButton.addActionListener(e -> {
+    String selected = (String) productSelector.getSelectedItem();
+    if (selected == null) {
+        JOptionPane.showMessageDialog(parent, "Please select a product first.");
+        return;
+    }
+    
+    try {
+        int amount = Integer.parseInt(amountField.getText());
+        if (amount <= 0) {
+            JOptionPane.showMessageDialog(parent, "Amount must be greater than zero.");
+            return;
+        }
+        
+        // Try to find factory that can sell
+        boolean purchaseSuccessful = false;
+        for (FactoryExtended f : factories) {
+            InventoryItem item = f.products.get(selected);
+            if (item != null && item.quantity >= amount) {
+                // Find cost per unit
+                double costPerUnit = 0;
+                for (ProductDesign d : f.designs) {
+                    if (d.name.equals(selected)) {
+                        costPerUnit = d.cost;
+                        break;
+                    }
+                }
+                
+                try {
+                    // Use the enhanced market.buyProduct with exceptions
+                    market.buyProduct(selected, amount, costPerUnit, f);
+                    
+                    // Update UI
+                    balanceLabel.setText("Balance: " + String.format("%.2f", market.balance));
+                    
+                    // Refresh product selection to update stock display
+                    productSelector.setSelectedItem(selected);
+                    
+                    // Show simple success message
+                    JOptionPane.showMessageDialog(parent, "Purchase successful!");
+                    
+                    purchaseSuccessful = true;
+                    break;
+                } catch (Exception ex) {
+                    // Show specific error message
+                    JOptionPane.showMessageDialog(parent, "Purchase failed: " + ex.getMessage());
+                    return;
+                }
+            }
+        }
+        
+        if (!purchaseSuccessful) {
+            JOptionPane.showMessageDialog(parent, "Could not find a factory with enough stock.");
+        }
+        
+    } catch (NumberFormatException ex) {
+        JOptionPane.showMessageDialog(parent, "Please enter a valid number for amount.");
+    } catch (Exception ex) {
+        JOptionPane.showMessageDialog(parent, "Error: " + ex.getMessage());
+    }
+});
+```
+
+5. EditMarketPanel updatePriceButton enhancement:
+```java
+updatePriceButton.addActionListener(e -> {
+    String selected = (String) productSelector.getSelectedItem();
+    if (selected == null) {
+        JOptionPane.showMessageDialog(parent, "Please select a product first.");
+        return;
+    }
+    
+    try {
+        double price = Double.parseDouble(priceField.getText());
+        
+        try {
+            // Use enhanced setPrice with exception for negative values
+            market.setPrice(selected, price);
+            JOptionPane.showMessageDialog(parent, "Price updated for " + selected + " to " + price);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(parent, "Price update failed: " + ex.getMessage());
+        }
+    } catch (NumberFormatException ex) {
+        JOptionPane.showMessageDialog(parent, "Please enter a valid number for price.");
+    }
+});
