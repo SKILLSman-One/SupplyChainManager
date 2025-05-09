@@ -1,7 +1,9 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
 import java.util.*;
+import java.awt.geom.RoundRectangle2D;
 
 /**
  * Supply Chain Management System
@@ -1817,23 +1819,1280 @@ class MainFrame extends JFrame {
      * Creates the main application frame
      */
     public MainFrame() {
-        setTitle("Supply Chain Management System");
-        setSize(800, 600);
+        setTitle("Supply Chain System");
+        setSize(700, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
         // Create sample data
         initializeSampleData();
 
-        // Create the main UI
+        // Create the main UI with a vertical button layout as shown in screenshots
         setLayout(new BorderLayout());
-
-        JTabbedPane tabs = new JTabbedPane();
-        tabs.addTab("Factories", createFactoryPanel());
-        tabs.addTab("Markets", createMarketPanel());
-        tabs.addTab("Customers", createCustomerPanel());
-
-        add(tabs, BorderLayout.CENTER);
+        
+        // Main title at the top
+        JLabel titleLabel = new JLabel("Supply Chain System", JLabel.CENTER);
+        titleLabel.setFont(new Font("Sans-Serif", Font.BOLD, 24));
+        add(titleLabel, BorderLayout.NORTH);
+        
+        // Create a panel for the main menu buttons with spacing between them
+        JPanel mainPanel = new JPanel(new GridLayout(4, 1, 10, 30));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(30, 100, 30, 100));
+        
+        // Create gradient panels with buttons for each section
+        JPanel producersPanel = createGradientPanel("Raw Material Producers");
+        producersPanel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                showProducersPanel();
+            }
+        });
+        
+        JPanel factoriesPanel = createGradientPanel("Factories");
+        factoriesPanel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                showFactoriesPanel();
+            }
+        });
+        
+        JPanel marketsPanel = createGradientPanel("Markets");
+        marketsPanel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                showMarketsPanel();
+            }
+        });
+        
+        JPanel customersPanel = createGradientPanel("Customers");
+        customersPanel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                showCustomersPanel();
+            }
+        });
+        
+        // Add the panels to the main panel
+        mainPanel.add(producersPanel);
+        mainPanel.add(factoriesPanel);
+        mainPanel.add(marketsPanel);
+        mainPanel.add(customersPanel);
+        
+        // Add the main panel to the center of the frame
+        add(mainPanel, BorderLayout.CENTER);
+    }
+    
+    /**
+     * Creates a gradient panel with the given title
+     * @param title The title to display on the panel
+     * @return A JPanel with gradient background and centered title
+     */
+    private JPanel createGradientPanel(String title) {
+        JPanel panel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                int w = getWidth();
+                int h = getHeight();
+                Color color1 = new Color(220, 230, 255);
+                Color color2 = new Color(200, 215, 240);
+                GradientPaint gp = new GradientPaint(0, 0, color1, 0, h, color2);
+                g2d.setPaint(gp);
+                g2d.fillRect(0, 0, w, h);
+            }
+        };
+        panel.setLayout(new BorderLayout());
+        JLabel label = new JLabel(title, JLabel.CENTER);
+        label.setFont(new Font("Sans-Serif", Font.BOLD, 16));
+        panel.add(label, BorderLayout.CENTER);
+        panel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return panel;
+    }
+    
+    /**
+     * Shows the producers panel
+     */
+    private void showProducersPanel() {
+        getContentPane().removeAll();
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        
+        // Create title panel with back button
+        JPanel titlePanel = new JPanel(new BorderLayout());
+        JLabel titleLabel = new JLabel("Raw Material Producers", JLabel.CENTER);
+        titleLabel.setFont(new Font("Sans-Serif", Font.BOLD, 18));
+        JButton backButton = new JButton("Back");
+        backButton.addActionListener(e -> {
+            // Return to main menu
+            getContentPane().removeAll();
+            setTitle("Supply Chain System");
+            // Create the main UI with a vertical button layout
+            setLayout(new BorderLayout());
+            
+            // Main title at the top
+            JLabel mainTitleLabel = new JLabel("Supply Chain System", JLabel.CENTER);
+            mainTitleLabel.setFont(new Font("Sans-Serif", Font.BOLD, 24));
+            add(mainTitleLabel, BorderLayout.NORTH);
+            
+            // Create a panel for the main menu buttons with spacing between them
+            JPanel menuPanel = new JPanel(new GridLayout(4, 1, 10, 30));
+            menuPanel.setBorder(BorderFactory.createEmptyBorder(30, 100, 30, 100));
+            
+            // Re-create all four panels
+            JPanel producersPanel = createGradientPanel("Raw Material Producers");
+            producersPanel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    showProducersPanel();
+                }
+            });
+            
+            JPanel factoriesPanel = createGradientPanel("Factories");
+            factoriesPanel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    showFactoriesPanel();
+                }
+            });
+            
+            JPanel marketsPanel = createGradientPanel("Markets");
+            marketsPanel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    showMarketsPanel();
+                }
+            });
+            
+            JPanel customersPanel = createGradientPanel("Customers");
+            customersPanel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    showCustomersPanel();
+                }
+            });
+            
+            // Add the panels to the main panel
+            menuPanel.add(producersPanel);
+            menuPanel.add(factoriesPanel);
+            menuPanel.add(marketsPanel);
+            menuPanel.add(customersPanel);
+            
+            // Add the main panel to the center of the frame
+            add(menuPanel, BorderLayout.CENTER);
+            revalidate();
+            repaint();
+        });
+        
+        titlePanel.add(titleLabel, BorderLayout.CENTER);
+        titlePanel.add(backButton, BorderLayout.EAST);
+        
+        // Add the title panel to the main panel
+        mainPanel.add(titlePanel, BorderLayout.NORTH);
+        
+        // Create and add the producers panel content
+        mainPanel.add(createProducersPanel(), BorderLayout.CENTER);
+        
+        // Add the main panel to the content pane
+        add(mainPanel);
+        revalidate();
+        repaint();
+    }
+    
+    /**
+     * Creates the producers panel content
+     * @return The producers panel
+     */
+    private JPanel createProducersPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        
+        // Create a panel for the list of producers
+        JPanel listPanel = new JPanel(new BorderLayout());
+        
+        // Create a model for the list of producers
+        DefaultListModel<Producer> producerListModel = new DefaultListModel<>();
+        
+        // Collect all producers from all factories
+        Set<Producer> allProducers = new HashSet<>();
+        for (FactoryExtended factory : factories) {
+            allProducers.addAll(factory.producers);
+        }
+        
+        // Add all producers to the list model
+        for (Producer producer : allProducers) {
+            producerListModel.addElement(producer);
+        }
+        
+        // Create a list to display the producers
+        JList<Producer> producerList = new JList<>(producerListModel);
+        
+        // If the list is empty, show a message
+        if (producerListModel.isEmpty()) {
+            JLabel emptyLabel = new JLabel("No producers. Add one!");
+            emptyLabel.setFont(new Font("Sans-Serif", Font.ITALIC, 14));
+            listPanel.add(emptyLabel, BorderLayout.CENTER);
+        } else {
+            JScrollPane scrollPane = new JScrollPane(producerList);
+            listPanel.add(scrollPane, BorderLayout.CENTER);
+        }
+        
+        // Add the list panel to the main panel
+        panel.add(listPanel, BorderLayout.CENTER);
+        
+        // Create buttons for adding and editing producers
+        JButton addBtn = new JButton("Add Producer");
+        JButton editBtn = new JButton("Edit Producer");
+        
+        // Create a panel for the buttons
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(addBtn);
+        buttonPanel.add(editBtn);
+        
+        // Add action listeners for the buttons
+        addBtn.addActionListener(e -> {
+            try {
+                // Show dialog to add new producer
+                JDialog addProducerDialog = new JDialog(this, "Add Producer", true);
+                addProducerDialog.setSize(300, 250);
+                addProducerDialog.setLocationRelativeTo(this);
+                addProducerDialog.setLayout(new GridLayout(6, 2, 5, 5));
+                
+                // Create icon for the dialog
+                JLabel iconLabel = new JLabel();
+                iconLabel.setIcon(new ImageIcon(createQuestionMarkIcon()));
+                
+                // Create form fields
+                JTextField nameField = new JTextField();
+                JTextField costField = new JTextField();
+                JTextField sellingPriceField = new JTextField();
+                JTextField capacityField = new JTextField();
+                JTextField fundField = new JTextField();
+                
+                // Add components to the dialog
+                addProducerDialog.add(iconLabel);
+                addProducerDialog.add(new JLabel()); // empty cell
+                addProducerDialog.add(new JLabel("Name:"));
+                addProducerDialog.add(nameField);
+                addProducerDialog.add(new JLabel("Cost:"));
+                addProducerDialog.add(costField);
+                addProducerDialog.add(new JLabel("Selling Price:"));
+                addProducerDialog.add(sellingPriceField);
+                addProducerDialog.add(new JLabel("Capacity:"));
+                addProducerDialog.add(capacityField);
+                addProducerDialog.add(new JLabel("Fund:"));
+                addProducerDialog.add(fundField);
+                
+                // Create buttons for the dialog
+                JButton okBtn = new JButton("OK");
+                JButton cancelBtn = new JButton("Cancel");
+                
+                // Create a panel for the buttons
+                JPanel dialogButtonPanel = new JPanel();
+                dialogButtonPanel.add(okBtn);
+                dialogButtonPanel.add(cancelBtn);
+                
+                // Add the button panel to the dialog
+                addProducerDialog.add(dialogButtonPanel);
+                
+                // Add action listeners for the buttons
+                okBtn.addActionListener(okEvent -> {
+                    try {
+                        // Validate and create new producer
+                        String name = nameField.getText().trim();
+                        if (name.isEmpty()) {
+                            throw new IllegalArgumentException("Name cannot be empty");
+                        }
+                        
+                        double cost;
+                        try {
+                            cost = Double.parseDouble(costField.getText());
+                            if (cost <= 0) {
+                                throw new NumberFormatException();
+                            }
+                        } catch (NumberFormatException ex) {
+                            throw new IllegalArgumentException("Cost must be a positive number");
+                        }
+                        
+                        // Create and add the new producer to all factories
+                        Producer newProducer = new Producer(name, cost);
+                        for (FactoryExtended factory : factories) {
+                            if (!factory.producers.contains(newProducer)) {
+                                factory.producers.add(newProducer);
+                            }
+                        }
+                        
+                        // Update the list and close the dialog
+                        producerListModel.addElement(newProducer);
+                        addProducerDialog.dispose();
+                        
+                    } catch (IllegalArgumentException ex) {
+                        JOptionPane.showMessageDialog(addProducerDialog,
+                            ex.getMessage(),
+                            "Invalid Input",
+                            JOptionPane.WARNING_MESSAGE);
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(addProducerDialog,
+                            "Error adding producer: " + ex.getMessage(),
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
+                    }
+                });
+                
+                // Add action listener for cancel button
+                cancelBtn.addActionListener(cancelEvent -> addProducerDialog.dispose());
+                
+                // Show the dialog
+                addProducerDialog.setVisible(true);
+                
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this,
+                    "Error creating dialog: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        });
+        
+        editBtn.addActionListener(e -> {
+            // Get the selected producer
+            Producer selectedProducer = producerList.getSelectedValue();
+            if (selectedProducer == null) {
+                JOptionPane.showMessageDialog(this,
+                    "Please select a producer to edit",
+                    "No Selection",
+                    JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            
+            try {
+                // Show dialog to edit producer
+                JDialog editProducerDialog = new JDialog(this, "Edit Producer: " + selectedProducer.name, true);
+                editProducerDialog.setSize(300, 200);
+                editProducerDialog.setLocationRelativeTo(this);
+                editProducerDialog.setLayout(new GridLayout(4, 2, 5, 5));
+                
+                // Create form fields with current values
+                JTextField costField = new JTextField(String.valueOf(selectedProducer.cost));
+                
+                // Add components to the dialog
+                editProducerDialog.add(new JLabel("Name:"));
+                editProducerDialog.add(new JLabel(selectedProducer.name)); // Name is not editable
+                editProducerDialog.add(new JLabel("Cost:"));
+                editProducerDialog.add(costField);
+                
+                // Create buttons for the dialog
+                JButton saveBtn = new JButton("Save");
+                JButton cancelBtn = new JButton("Cancel");
+                
+                // Create a panel for the buttons
+                JPanel dialogButtonPanel = new JPanel();
+                dialogButtonPanel.add(saveBtn);
+                dialogButtonPanel.add(cancelBtn);
+                
+                // Add the button panel to the dialog
+                editProducerDialog.add(new JLabel()); // Empty cell
+                editProducerDialog.add(dialogButtonPanel);
+                
+                // Add action listeners for the buttons
+                saveBtn.addActionListener(saveEvent -> {
+                    try {
+                        // Validate and update producer
+                        double cost;
+                        try {
+                            cost = Double.parseDouble(costField.getText());
+                            if (cost <= 0) {
+                                throw new NumberFormatException();
+                            }
+                        } catch (NumberFormatException ex) {
+                            throw new IllegalArgumentException("Cost must be a positive number");
+                        }
+                        
+                        // Update the producer
+                        selectedProducer.cost = cost;
+                        
+                        // Refresh the list
+                        producerList.repaint();
+                        
+                        // Close the dialog
+                        editProducerDialog.dispose();
+                        
+                    } catch (IllegalArgumentException ex) {
+                        JOptionPane.showMessageDialog(editProducerDialog,
+                            ex.getMessage(),
+                            "Invalid Input",
+                            JOptionPane.WARNING_MESSAGE);
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(editProducerDialog,
+                            "Error updating producer: " + ex.getMessage(),
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
+                    }
+                });
+                
+                // Add action listener for cancel button
+                cancelBtn.addActionListener(cancelEvent -> editProducerDialog.dispose());
+                
+                // Show the dialog
+                editProducerDialog.setVisible(true);
+                
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this,
+                    "Error creating dialog: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        });
+        
+        // Add the button panel to the main panel
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+        
+        return panel;
+    }
+    
+    /**
+     * Creates a question mark icon for the Add Producer dialog
+     * @return The icon as a BufferedImage
+     */
+    private BufferedImage createQuestionMarkIcon() {
+        // Create a 32x32 icon with a green background and question mark
+        BufferedImage icon = new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = icon.createGraphics();
+        
+        // Set rendering hints for better quality
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        
+        // Draw green background
+        g2d.setColor(new Color(144, 238, 144)); // Light green
+        g2d.fillRect(0, 0, 32, 32);
+        
+        // Draw question mark
+        g2d.setColor(Color.BLACK);
+        g2d.setFont(new Font("Sans-Serif", Font.BOLD, 24));
+        g2d.drawString("?", 12, 24);
+        
+        g2d.dispose();
+        return icon;
+    }
+    
+    /**
+     * Shows the factories panel
+     */
+    private void showFactoriesPanel() {
+        getContentPane().removeAll();
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        
+        // Create title panel with back button
+        JPanel titlePanel = new JPanel(new BorderLayout());
+        JLabel titleLabel = new JLabel("Factories", JLabel.CENTER);
+        titleLabel.setFont(new Font("Sans-Serif", Font.BOLD, 18));
+        JButton backButton = new JButton("Back");
+        backButton.addActionListener(e -> {
+            // Return to main menu
+            getContentPane().removeAll();
+            setTitle("Supply Chain System");
+            // Create the main UI with a vertical button layout
+            setLayout(new BorderLayout());
+            
+            // Main title at the top
+            JLabel mainTitleLabel = new JLabel("Supply Chain System", JLabel.CENTER);
+            mainTitleLabel.setFont(new Font("Sans-Serif", Font.BOLD, 24));
+            add(mainTitleLabel, BorderLayout.NORTH);
+            
+            // Create a panel for the main menu buttons with spacing between them
+            JPanel menuPanel = new JPanel(new GridLayout(4, 1, 10, 30));
+            menuPanel.setBorder(BorderFactory.createEmptyBorder(30, 100, 30, 100));
+            
+            // Re-create all four panels
+            JPanel producersPanel = createGradientPanel("Raw Material Producers");
+            producersPanel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    showProducersPanel();
+                }
+            });
+            
+            JPanel factoriesPanel = createGradientPanel("Factories");
+            factoriesPanel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    showFactoriesPanel();
+                }
+            });
+            
+            JPanel marketsPanel = createGradientPanel("Markets");
+            marketsPanel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    showMarketsPanel();
+                }
+            });
+            
+            JPanel customersPanel = createGradientPanel("Customers");
+            customersPanel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    showCustomersPanel();
+                }
+            });
+            
+            // Add the panels to the main panel
+            menuPanel.add(producersPanel);
+            menuPanel.add(factoriesPanel);
+            menuPanel.add(marketsPanel);
+            menuPanel.add(customersPanel);
+            
+            // Add the main panel to the center of the frame
+            add(menuPanel, BorderLayout.CENTER);
+            revalidate();
+            repaint();
+        });
+        
+        titlePanel.add(titleLabel, BorderLayout.CENTER);
+        titlePanel.add(backButton, BorderLayout.EAST);
+        
+        // Add the title panel to the main panel
+        mainPanel.add(titlePanel, BorderLayout.NORTH);
+        
+        // Create the factory list panel with radio buttons
+        JPanel listPanel = new JPanel(new BorderLayout());
+        
+        // If factories list is empty, show a message
+        if (factories.isEmpty()) {
+            JLabel emptyLabel = new JLabel("No factories. Add one!");
+            emptyLabel.setFont(new Font("Sans-Serif", Font.ITALIC, 14));
+            listPanel.add(emptyLabel, BorderLayout.CENTER);
+        } else {
+            // Create a panel for the factory list with radio buttons
+            JPanel factoryRadioPanel = new JPanel(new GridLayout(factories.size(), 1));
+            ButtonGroup factoryGroup = new ButtonGroup();
+            
+            // Create a radio button for each factory
+            for (FactoryExtended factory : factories) {
+                JRadioButton factoryRadio = new JRadioButton(factory.name);
+                factoryRadio.setActionCommand(factory.name);
+                factoryGroup.add(factoryRadio);
+                factoryRadioPanel.add(factoryRadio);
+                
+                // Select the first factory by default
+                if (factoryGroup.getSelection() == null) {
+                    factoryRadio.setSelected(true);
+                }
+            }
+            
+            listPanel.add(factoryRadioPanel, BorderLayout.CENTER);
+        }
+        
+        // Add the list panel to the main panel
+        mainPanel.add(listPanel, BorderLayout.CENTER);
+        
+        // Create buttons for adding and editing factories
+        JButton addBtn = new JButton("Add Factory");
+        JButton editBtn = new JButton("Edit Factory");
+        
+        // Create a panel for the buttons
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(addBtn);
+        buttonPanel.add(editBtn);
+        
+        // Add action listeners for the buttons
+        addBtn.addActionListener(e -> {
+            try {
+                // Show dialog to add new factory
+                JDialog addFactoryDialog = new JDialog(this, "Add Factory", true);
+                addFactoryDialog.setSize(300, 200);
+                addFactoryDialog.setLocationRelativeTo(this);
+                addFactoryDialog.setLayout(new GridLayout(3, 2, 5, 5));
+                
+                // Create form fields
+                JTextField nameField = new JTextField();
+                JTextField balanceField = new JTextField();
+                
+                // Add components to the dialog
+                addFactoryDialog.add(new JLabel("Factory Name:"));
+                addFactoryDialog.add(nameField);
+                addFactoryDialog.add(new JLabel("Initial Balance:"));
+                addFactoryDialog.add(balanceField);
+                
+                // Create buttons for the dialog
+                JButton okBtn = new JButton("Add");
+                JButton cancelBtn = new JButton("Cancel");
+                
+                // Create a panel for the buttons
+                JPanel dialogButtonPanel = new JPanel();
+                dialogButtonPanel.add(okBtn);
+                dialogButtonPanel.add(cancelBtn);
+                
+                // Add the button panel to the dialog
+                addFactoryDialog.add(new JLabel()); // Empty cell
+                addFactoryDialog.add(dialogButtonPanel);
+                
+                // Add action listeners for the buttons
+                okBtn.addActionListener(okEvent -> {
+                    try {
+                        // Validate inputs
+                        String name = nameField.getText().trim();
+                        if (name.isEmpty()) {
+                            throw new IllegalArgumentException("Factory name cannot be empty");
+                        }
+                        
+                        // Check for duplicate factory names
+                        for (Factory existingFactory : factories) {
+                            if (existingFactory.name.equals(name)) {
+                                throw new IllegalArgumentException("A factory with this name already exists");
+                            }
+                        }
+                        
+                        double balance;
+                        try {
+                            balance = Double.parseDouble(balanceField.getText());
+                            if (balance < 0) {
+                                throw new NumberFormatException();
+                            }
+                        } catch (NumberFormatException ex) {
+                            throw new IllegalArgumentException("Balance must be a positive number");
+                        }
+                        
+                        // Create and add the new factory
+                        FactoryExtended newFactory = new FactoryExtended(name, balance);
+                        factories.add(newFactory);
+                        
+                        // Close the dialog and refresh the factories panel
+                        addFactoryDialog.dispose();
+                        showFactoriesPanel(); // Refresh the panel
+                        
+                    } catch (IllegalArgumentException ex) {
+                        JOptionPane.showMessageDialog(addFactoryDialog, 
+                            ex.getMessage(), 
+                            "Invalid Input", 
+                            JOptionPane.WARNING_MESSAGE);
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(addFactoryDialog, 
+                            "Error adding factory: " + ex.getMessage(), 
+                            "Error", 
+                            JOptionPane.ERROR_MESSAGE);
+                    }
+                });
+                
+                // Add action listener for cancel button
+                cancelBtn.addActionListener(cancelEvent -> addFactoryDialog.dispose());
+                
+                // Show the dialog
+                addFactoryDialog.setVisible(true);
+                
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, 
+                    "Error creating dialog: " + ex.getMessage(), 
+                    "Error", 
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        });
+        
+        editBtn.addActionListener(e -> {
+            // Get the selected factory
+            ButtonGroup factoryGroup = new ButtonGroup();
+            Enumeration<AbstractButton> buttons = factoryGroup.getElements();
+            FactoryExtended selectedFactory = null;
+            
+            while (buttons.hasMoreElements()) {
+                AbstractButton button = buttons.nextElement();
+                if (button.isSelected()) {
+                    String factoryName = button.getActionCommand();
+                    for (FactoryExtended factory : factories) {
+                        if (factory.name.equals(factoryName)) {
+                            selectedFactory = factory;
+                            break;
+                        }
+                    }
+                    break;
+                }
+            }
+            
+            if (selectedFactory == null && !factories.isEmpty()) {
+                // If no factory is selected but factories exist, select the first one
+                selectedFactory = factories.get(0);
+            }
+            
+            if (selectedFactory == null) {
+                JOptionPane.showMessageDialog(this, 
+                    "No factory available to edit. Please add a factory first.", 
+                    "No Factory", 
+                    JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            
+            // Now we have a selected factory, show the edit dialog
+            FactoryExtended factory = selectedFactory; // Final reference for lambda
+            
+            try {
+                // Show the edit factory dialog similar to the original EditFactoryDialog
+                JDialog editFactoryDialog = new JDialog(this, "Edit Factory: " + factory.name, true);
+                editFactoryDialog.setSize(400, 300);
+                editFactoryDialog.setLocationRelativeTo(this);
+                editFactoryDialog.setLayout(new BorderLayout());
+                
+                // Create a panel with factory information
+                JPanel infoPanel = new JPanel(new GridLayout(4, 2, 5, 5));
+                infoPanel.add(new JLabel("Name:"));
+                infoPanel.add(new JLabel(factory.name));
+                infoPanel.add(new JLabel("Balance:"));
+                infoPanel.add(new JLabel(String.format("%.2f", factory.balance)));
+                infoPanel.add(new JLabel("Capacity:"));
+                infoPanel.add(new JLabel("1")); // Placeholder as in screenshots
+                infoPanel.add(new JLabel("Stock:"));
+                infoPanel.add(new JLabel("0")); // Placeholder as in screenshots
+                
+                // Create a panel for material selection and buying
+                JPanel materialPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+                materialPanel.add(new JLabel("Select Material:"));
+                
+                // Create a combo box with available producers/materials
+                JComboBox<Producer> materialCombo = new JComboBox<>();
+                for (Producer producer : factory.producers) {
+                    materialCombo.addItem(producer);
+                }
+                
+                materialPanel.add(materialCombo);
+                materialPanel.add(new JLabel("Amount:"));
+                JTextField amountField = new JTextField(5);
+                materialPanel.add(amountField);
+                JButton buyBtn = new JButton("Buy");
+                materialPanel.add(buyBtn);
+                
+                // Add a label to display the current stock
+                JLabel stockLabel = new JLabel("Stock: -");
+                materialPanel.add(stockLabel);
+                
+                // Create buttons for other factory operations
+                JButton createDesignBtn = new JButton("Create Design");
+                JButton manufacturingBtn = new JButton("Manufacturing");
+                JButton viewInventoryBtn = new JButton("View Inventory");
+                JButton destroyByproductBtn = new JButton("Destroy Byproduct");
+                
+                // Create a panel for the operation buttons
+                JPanel operationPanel = new JPanel(new GridLayout(2, 2, 5, 5));
+                operationPanel.add(createDesignBtn);
+                operationPanel.add(manufacturingBtn);
+                operationPanel.add(viewInventoryBtn);
+                operationPanel.add(destroyByproductBtn);
+                
+                // Add action listeners for the buttons
+                // (For simplicity, we're not implementing all functionality in this update)
+                
+                // Add all panels to the dialog
+                JPanel mainDialogPanel = new JPanel(new BorderLayout());
+                mainDialogPanel.add(infoPanel, BorderLayout.NORTH);
+                mainDialogPanel.add(materialPanel, BorderLayout.CENTER);
+                mainDialogPanel.add(operationPanel, BorderLayout.SOUTH);
+                
+                editFactoryDialog.add(mainDialogPanel, BorderLayout.CENTER);
+                
+                // Add a close button at the bottom
+                JButton closeBtn = new JButton("Back");
+                closeBtn.addActionListener(closeEvent -> editFactoryDialog.dispose());
+                
+                JPanel closePanel = new JPanel();
+                closePanel.add(closeBtn);
+                editFactoryDialog.add(closePanel, BorderLayout.SOUTH);
+                
+                // Show the dialog
+                editFactoryDialog.setVisible(true);
+                
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, 
+                    "Error editing factory: " + ex.getMessage(), 
+                    "Error", 
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        });
+        
+        // Add the button panel to the main panel
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+        
+        // Add the main panel to the content pane
+        add(mainPanel);
+        revalidate();
+        repaint();
+    }
+    
+    /**
+     * Shows the markets panel
+     */
+    private void showMarketsPanel() {
+        getContentPane().removeAll();
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        
+        // Create title panel with back button
+        JPanel titlePanel = new JPanel(new BorderLayout());
+        JLabel titleLabel = new JLabel("Markets", JLabel.CENTER);
+        titleLabel.setFont(new Font("Sans-Serif", Font.BOLD, 18));
+        JButton backButton = new JButton("Back");
+        backButton.addActionListener(e -> {
+            // Return to main menu
+            getContentPane().removeAll();
+            setTitle("Supply Chain System");
+            // Create the main UI with a vertical button layout
+            setLayout(new BorderLayout());
+            
+            // Main title at the top
+            JLabel mainTitleLabel = new JLabel("Supply Chain System", JLabel.CENTER);
+            mainTitleLabel.setFont(new Font("Sans-Serif", Font.BOLD, 24));
+            add(mainTitleLabel, BorderLayout.NORTH);
+            
+            // Create a panel for the main menu buttons with spacing between them
+            JPanel menuPanel = new JPanel(new GridLayout(4, 1, 10, 30));
+            menuPanel.setBorder(BorderFactory.createEmptyBorder(30, 100, 30, 100));
+            
+            // Re-create all four panels
+            JPanel producersPanel = createGradientPanel("Raw Material Producers");
+            producersPanel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    showProducersPanel();
+                }
+            });
+            
+            JPanel factoriesPanel = createGradientPanel("Factories");
+            factoriesPanel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    showFactoriesPanel();
+                }
+            });
+            
+            JPanel marketsPanel = createGradientPanel("Markets");
+            marketsPanel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    showMarketsPanel();
+                }
+            });
+            
+            JPanel customersPanel = createGradientPanel("Customers");
+            customersPanel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    showCustomersPanel();
+                }
+            });
+            
+            // Add the panels to the main panel
+            menuPanel.add(producersPanel);
+            menuPanel.add(factoriesPanel);
+            menuPanel.add(marketsPanel);
+            menuPanel.add(customersPanel);
+            
+            // Add the main panel to the center of the frame
+            add(menuPanel, BorderLayout.CENTER);
+            revalidate();
+            repaint();
+        });
+        
+        titlePanel.add(titleLabel, BorderLayout.CENTER);
+        titlePanel.add(backButton, BorderLayout.EAST);
+        
+        // Add the title panel to the main panel
+        mainPanel.add(titlePanel, BorderLayout.NORTH);
+        
+        // Create and add the markets panel content
+        JPanel marketsListPanel = new JPanel(new BorderLayout());
+        
+        // If markets list is empty, show a message
+        if (markets.isEmpty()) {
+            JLabel emptyLabel = new JLabel("No markets. Add one!");
+            emptyLabel.setFont(new Font("Sans-Serif", Font.ITALIC, 14));
+            marketsListPanel.add(emptyLabel, BorderLayout.CENTER);
+        } else {
+            // Create a panel for the market list
+            JPanel marketButtonsPanel = new JPanel(new GridLayout(markets.size(), 1));
+            
+            // Create a button for each market
+            for (Market market : markets) {
+                JButton marketButton = new JButton(market.name);
+                marketButton.addActionListener(actionEvent -> {
+                    try {
+                        // Show dialog to edit market
+                        JDialog editMarketDialog = new JDialog(this, "Edit Market: " + market.name, true);
+                        editMarketDialog.setSize(400, 300);
+                        editMarketDialog.setLocationRelativeTo(this);
+                        editMarketDialog.setLayout(new BorderLayout());
+                        
+                        // Create a panel with market information
+                        JPanel infoPanel = new JPanel(new GridLayout(1, 2, 5, 5));
+                        infoPanel.add(new JLabel("Balance:"));
+                        infoPanel.add(new JLabel(String.format("%.1f", market.balance)));
+                        
+                        // Create a panel for product selection and buying
+                        JPanel buyPanel = new JPanel(new GridLayout(4, 2, 5, 5));
+                        buyPanel.add(new JLabel("Select Product:"));
+                        
+                        // Create a combo box with available products
+                        JComboBox<String> productCombo = new JComboBox<>();
+                        Set<String> allProducts = new HashSet<>();
+                        
+                        // Get all products from all factories
+                        for (FactoryExtended factory : factories) {
+                            allProducts.addAll(factory.products.keySet());
+                        }
+                        
+                        // Add products to the combo box
+                        for (String product : allProducts) {
+                            productCombo.addItem(product);
+                        }
+                        
+                        buyPanel.add(productCombo);
+                        
+                        // Add stock quantity label
+                        buyPanel.add(new JLabel("Stock Quantity:"));
+                        JLabel stockLabel = new JLabel("-");
+                        buyPanel.add(stockLabel);
+                        
+                        // Update stock display when product selection changes
+                        productCombo.addActionListener(comboEvent -> {
+                            String selectedProduct = (String) productCombo.getSelectedItem();
+                            if (selectedProduct != null) {
+                                int quantity = market.stock.getOrDefault(selectedProduct, 0);
+                                stockLabel.setText(String.valueOf(quantity));
+                            }
+                        });
+                        
+                        // Add amount field and buy button
+                        buyPanel.add(new JLabel("Amount:"));
+                        JTextField amountField = new JTextField();
+                        buyPanel.add(amountField);
+                        buyPanel.add(new JLabel(""));
+                        JButton buyBtn = new JButton("Buy");
+                        buyPanel.add(buyBtn);
+                        
+                        // Add price setting section
+                        JPanel pricePanel = new JPanel(new GridLayout(1, 3, 5, 5));
+                        pricePanel.add(new JLabel("Price (for stock):"));
+                        JTextField priceField = new JTextField();
+                        pricePanel.add(priceField);
+                        JButton updatePriceBtn = new JButton("Update Price");
+                        pricePanel.add(updatePriceBtn);
+                        
+                        // Add action listener for buy button
+                        buyBtn.addActionListener(buyEvent -> {
+                            try {
+                                String selectedProduct = (String) productCombo.getSelectedItem();
+                                if (selectedProduct == null) {
+                                    JOptionPane.showMessageDialog(editMarketDialog,
+                                        "Please select a product first.",
+                                        "No Product Selected",
+                                        JOptionPane.WARNING_MESSAGE);
+                                    return;
+                                }
+                                
+                                // Validate amount
+                                int amount;
+                                try {
+                                    amount = Integer.parseInt(amountField.getText());
+                                    if (amount <= 0) {
+                                        throw new NumberFormatException();
+                                    }
+                                } catch (NumberFormatException ex) {
+                                    JOptionPane.showMessageDialog(editMarketDialog,
+                                        "Please enter a valid positive number for amount.",
+                                        "Invalid Amount",
+                                        JOptionPane.WARNING_MESSAGE);
+                                    amountField.requestFocus();
+                                    return;
+                                }
+                                
+                                // Find factory with enough stock
+                                boolean purchaseSuccessful = false;
+                                for (FactoryExtended factory : factories) {
+                                    InventoryItem item = factory.products.get(selectedProduct);
+                                    if (item != null && item.quantity >= amount) {
+                                        double costPerUnit = 0;
+                                        // Find the product design to get the cost
+                                        for (ProductDesign design : factory.designs) {
+                                            if (design.name.equals(selectedProduct)) {
+                                                costPerUnit = design.cost;
+                                                break;
+                                            }
+                                        }
+                                        
+                                        // Check if market has enough money
+                                        double totalCost = costPerUnit * amount;
+                                        if (market.balance < totalCost) {
+                                            JOptionPane.showMessageDialog(editMarketDialog,
+                                                "Market does not have enough balance. Required: " +
+                                                String.format("%.2f", totalCost) + ", Available: " +
+                                                String.format("%.2f", market.balance),
+                                                "Insufficient Balance",
+                                                JOptionPane.WARNING_MESSAGE);
+                                            return;
+                                        }
+                                        
+                                        // Execute purchase
+                                        if (market.buyProduct(selectedProduct, amount, costPerUnit, factory)) {
+                                            // Update displayed information
+                                            infoPanel.removeAll();
+                                            infoPanel.add(new JLabel("Balance:"));
+                                            infoPanel.add(new JLabel(String.format("%.1f", market.balance)));
+                                            
+                                            int newStock = market.stock.getOrDefault(selectedProduct, 0);
+                                            stockLabel.setText(String.valueOf(newStock));
+                                            
+                                            JOptionPane.showMessageDialog(editMarketDialog,
+                                                "Successfully purchased " + amount + " units of " + selectedProduct +
+                                                " for a total of " + String.format("%.2f", totalCost),
+                                                "Purchase Successful",
+                                                JOptionPane.INFORMATION_MESSAGE);
+                                            
+                                            purchaseSuccessful = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                
+                                if (!purchaseSuccessful) {
+                                    JOptionPane.showMessageDialog(editMarketDialog,
+                                        "Not enough stock in factories or purchase failed.",
+                                        "Purchase Failed",
+                                        JOptionPane.WARNING_MESSAGE);
+                                }
+                                
+                            } catch (Exception ex) {
+                                JOptionPane.showMessageDialog(editMarketDialog,
+                                    "Error during purchase: " + ex.getMessage(),
+                                    "Purchase Error",
+                                    JOptionPane.ERROR_MESSAGE);
+                            }
+                        });
+                        
+                        // Add action listener for update price button
+                        updatePriceBtn.addActionListener(priceEvent -> {
+                            try {
+                                String selectedProduct = (String) productCombo.getSelectedItem();
+                                if (selectedProduct == null) {
+                                    JOptionPane.showMessageDialog(editMarketDialog,
+                                        "Please select a product first.",
+                                        "No Product Selected",
+                                        JOptionPane.WARNING_MESSAGE);
+                                    return;
+                                }
+                                
+                                // Validate price
+                                double price;
+                                try {
+                                    price = Double.parseDouble(priceField.getText());
+                                    if (price < 0) {
+                                        throw new NumberFormatException();
+                                    }
+                                } catch (NumberFormatException ex) {
+                                    JOptionPane.showMessageDialog(editMarketDialog,
+                                        "Please enter a valid positive number for price.",
+                                        "Invalid Price",
+                                        JOptionPane.WARNING_MESSAGE);
+                                    priceField.requestFocus();
+                                    return;
+                                }
+                                
+                                // Update the price
+                                market.setPrice(selectedProduct, price);
+                                
+                                JOptionPane.showMessageDialog(editMarketDialog,
+                                    "Price updated for " + selectedProduct + " to " + String.format("%.2f", price),
+                                    "Price Updated",
+                                    JOptionPane.INFORMATION_MESSAGE);
+                            } catch (Exception ex) {
+                                JOptionPane.showMessageDialog(editMarketDialog,
+                                    "Error updating price: " + ex.getMessage(),
+                                    "Error",
+                                    JOptionPane.ERROR_MESSAGE);
+                            }
+                        });
+                        
+                        // Create main panel and add components
+                        JPanel mainDialogPanel = new JPanel(new BorderLayout());
+                        mainDialogPanel.add(infoPanel, BorderLayout.NORTH);
+                        mainDialogPanel.add(buyPanel, BorderLayout.CENTER);
+                        mainDialogPanel.add(pricePanel, BorderLayout.SOUTH);
+                        
+                        editMarketDialog.add(mainDialogPanel, BorderLayout.CENTER);
+                        
+                        // Add a close button at the bottom
+                        JButton closeBtn = new JButton("Close");
+                        closeBtn.addActionListener(closeEvent -> editMarketDialog.dispose());
+                        
+                        JPanel closePanel = new JPanel();
+                        closePanel.add(closeBtn);
+                        editMarketDialog.add(closePanel, BorderLayout.SOUTH);
+                        
+                        // Show the dialog
+                        editMarketDialog.setVisible(true);
+                        
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(this,
+                            "Error editing market: " + ex.getMessage(),
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
+                    }
+                });
+                
+                marketButtonsPanel.add(marketButton);
+            }
+            
+            marketsListPanel.add(marketButtonsPanel, BorderLayout.CENTER);
+        }
+        
+        // Add the markets list panel to the main panel
+        mainPanel.add(marketsListPanel, BorderLayout.CENTER);
+        
+        // Create buttons for adding markets
+        JButton addBtn = new JButton("Add Market");
+        JButton editBtn = new JButton("Edit Market");
+        
+        // Create a panel for the buttons
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(addBtn);
+        buttonPanel.add(editBtn);
+        
+        // Add action listener for add button
+        addBtn.addActionListener(e -> {
+            try {
+                // Create a dialog for adding a new market
+                JDialog addMarketDialog = new JDialog(this, "Add New Market", true);
+                addMarketDialog.setSize(300, 150);
+                addMarketDialog.setLocationRelativeTo(this);
+                addMarketDialog.setLayout(new GridLayout(3, 2, 5, 5));
+                
+                // Add components to the dialog
+                JLabel nameLabel = new JLabel("Market Name:");
+                JTextField nameField = new JTextField();
+                JLabel balanceLabel = new JLabel("Initial Balance:");
+                JTextField balanceField = new JTextField();
+                JButton dialogAddBtn = new JButton("Add");
+                
+                addMarketDialog.add(nameLabel);
+                addMarketDialog.add(nameField);
+                addMarketDialog.add(balanceLabel);
+                addMarketDialog.add(balanceField);
+                addMarketDialog.add(new JLabel()); // Empty cell
+                addMarketDialog.add(dialogAddBtn);
+                
+                // Add action listener for add button
+                dialogAddBtn.addActionListener(dialogEvent -> {
+                    try {
+                        // Validate inputs
+                        String name = nameField.getText().trim();
+                        if (name.isEmpty()) {
+                            throw new IllegalArgumentException("Market name cannot be empty");
+                        }
+                        
+                        // Check for duplicate market names
+                        for (Market existingMarket : markets) {
+                            if (existingMarket.name.equals(name)) {
+                                throw new IllegalArgumentException("A market with this name already exists");
+                            }
+                        }
+                        
+                        double balance;
+                        try {
+                            balance = Double.parseDouble(balanceField.getText());
+                            if (balance < 0) {
+                                throw new NumberFormatException();
+                            }
+                        } catch (NumberFormatException ex) {
+                            throw new IllegalArgumentException("Balance must be a positive number");
+                        }
+                        
+                        // Create and add the new market
+                        Market newMarket = new Market(name, balance);
+                        markets.add(newMarket);
+                        
+                        // Close the dialog and refresh the markets panel
+                        addMarketDialog.dispose();
+                        showMarketsPanel(); // Refresh the panel
+                        
+                    } catch (IllegalArgumentException ex) {
+                        JOptionPane.showMessageDialog(addMarketDialog,
+                            ex.getMessage(),
+                            "Invalid Input",
+                            JOptionPane.WARNING_MESSAGE);
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(addMarketDialog,
+                            "Error adding market: " + ex.getMessage(),
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
+                    }
+                });
+                
+                // Show the dialog
+                addMarketDialog.setVisible(true);
+                
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this,
+                    "Error creating dialog: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        });
+        
+        // Add action listener for edit button (similar to clicking a market button)
+        editBtn.addActionListener(e -> {
+            if (markets.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                    "No markets available to edit. Please add a market first.",
+                    "No Markets",
+                    JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            
+            // For simplicity, just edit the first market
+            Market market = markets.get(0);
+            
+            try {
+                // Show dialog to edit market (simplified version)
+                JDialog editMarketDialog = new JDialog(this, "Edit Market: " + market.name, true);
+                editMarketDialog.setSize(400, 300);
+                editMarketDialog.setLocationRelativeTo(this);
+                editMarketDialog.setLayout(new BorderLayout());
+                
+                // Create a panel with market information
+                JPanel infoPanel = new JPanel(new GridLayout(1, 2, 5, 5));
+                infoPanel.add(new JLabel("Balance:"));
+                infoPanel.add(new JLabel(String.format("%.1f", market.balance)));
+                
+                editMarketDialog.add(infoPanel, BorderLayout.NORTH);
+                
+                // Add a close button at the bottom
+                JButton closeBtn = new JButton("Close");
+                closeBtn.addActionListener(closeEvent -> editMarketDialog.dispose());
+                
+                JPanel closePanel = new JPanel();
+                closePanel.add(closeBtn);
+                editMarketDialog.add(closePanel, BorderLayout.SOUTH);
+                
+                // Show the dialog
+                editMarketDialog.setVisible(true);
+                
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this,
+                    "Error editing market: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        });
+        
+        // Add the button panel to the main panel
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+        
+        // Add the main panel to the content pane
+        add(mainPanel);
+        revalidate();
+        repaint();
+    }
+    
+    /**
+     * Shows the customers panel
+     */
+    private void showCustomersPanel() {
+        getContentPane().removeAll();
+        getContentPane().add(createCustomerPanel(), BorderLayout.CENTER);
+        revalidate();
+        repaint();
     }
 
     /**
