@@ -34,7 +34,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "javac SupplyChainSystemGUI.java && java SupplyChainSystemGUI"
+args = "./run_app.sh"
 
 [deployment]
-run = ["sh", "-c", "javac SupplyChainSystemGUI.java && java SupplyChainSystemGUI"]
+run = ["sh", "-c", "./run_app.sh"]
