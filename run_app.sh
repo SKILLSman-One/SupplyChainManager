@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Clean all class files
+# Clean all class files first
 rm -f *.class
 
-# Compile just our main file
+# Compile only the main file
 javac SupplyChainSystemGUI.java
 
 if [ $? -eq 0 ]; then
