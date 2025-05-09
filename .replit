@@ -1,0 +1,40 @@
+modules = ["java", "java-17"]
+
+[nix]
+channel = "stable-24_05"
+packages = ["jdk17"]
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Java Supply Chain System"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "supply_chain_app"
+
+[[workflows.workflow]]
+name = "Java Supply Chain System"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "javac SupplyChainSystemGUI.java && java SupplyChainSystemGUI"
+
+[[workflows.workflow]]
+name = "supply_chain_app"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "javac SupplyChainSystemGUI.java && java SupplyChainSystemGUI"
+
+[deployment]
+run = ["sh", "-c", "javac SupplyChainSystemGUI.java && java SupplyChainSystemGUI"]
